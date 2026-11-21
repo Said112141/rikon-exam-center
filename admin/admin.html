@@ -346,6 +346,9 @@ body.printing-results #results label:has(.result-select-checkbox) {
 </style>
 
 <!-- FIREBASE SDK -->
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com">
+<link rel="dns-prefetch" href="https://identitytoolkit.googleapis.com">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -2265,21 +2268,24 @@ await renderStudentList();
 async function updateDashboard() {
    
     document.getElementById("totalQuestions").textContent = questionList.length;
+    const coursePromise = adminDb.collection("courses").get();
+    const studentPromise = adminDb.collection("students").get();
+    const resultPromise = adminDb.collection("results").get();
     try {
-    const courseSnapshot = await adminDb.collection("courses").get();
+    const courseSnapshot = await coursePromise;
     document.getElementById("totalCourses").textContent = courseSnapshot.size;
 } catch (error) {
     console.error("Total Courses Loading Error:", error);
     document.getElementById("totalCourses").textContent = "Error";
 }
     try {
-        const studentSnapshot = await adminDb.collection("students").get();
+        const studentSnapshot = await studentPromise;
         document.getElementById("totalStudents").textContent = studentSnapshot.size;
     } catch (error) {
         document.getElementById("totalStudents").textContent = "Error";
     }
     try {
-        const resultSnapshot = await adminDb.collection("results").get();
+        const resultSnapshot = await resultPromise;
         document.getElementById("totalResultsPublished").textContent = resultSnapshot.size;
     } catch (error) {
         console.error("Total Results Loading Error:", error);

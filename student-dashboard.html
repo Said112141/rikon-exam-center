@@ -332,6 +332,9 @@
 
 </style>
 
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com">
+<link rel="dns-prefetch" href="https://identitytoolkit.googleapis.com">
 <!-- FIREBASE SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -592,8 +595,7 @@ console.log("CURRENT TIME:", Date.now());
         document.getElementById("welcomeName").textContent =
             "Welcome, " + currentStudent.name + "!";
 try {
-   await loadStudentExamData();
-await loadHighlightedCourses();
+   await Promise.all([loadStudentExamData(), loadHighlightedCourses()]);
 console.log("Firebase Exam Data Loaded Successfully");
 
 
@@ -624,6 +626,7 @@ let exams = [];
 let questions = [];
 
 let questionsLoaded = false;
+let questionsLoadPromise = null;
 
 async function loadStudentExamData() {
 // LOAD COURSE EXAMS
@@ -642,30 +645,34 @@ try {
     console.error("COURSE EXAMS LOADING ERROR:", error);
     throw error;
 }
-    
-    // LOAD QUESTIONS
-    try {
 
-        const questionSnapshot = await db.collection("questions").get();
+}
 
-        questions = questionSnapshot.docs.map(doc => ({
-    ...doc.data(),
-    id: doc.id,
-    firestoreId: doc.id
-}));
+async function ensureQuestionsLoaded() {
+    if (questionsLoaded) return;
+    if (questionsLoadPromise) return questionsLoadPromise;
+    questionsLoadPromise = (async () => {
+        try {
+            const questionSnapshot = await db.collection("questions").get();
 
-        questionsLoaded = true;
+            questions = questionSnapshot.docs.map(doc => ({
+                ...doc.data(),
+                id: doc.id,
+                firestoreId: doc.id
+            }));
 
-        console.log("QUESTIONS LOADED:", questions.length);
+            questionsLoaded = true;
 
-
-    } catch (error) {
-
-        console.error("QUESTIONS PERMISSION ERROR:", error);
-        throw error;
-
-    }
-
+            console.log("QUESTIONS LOADED:", questions.length);
+        } catch (error) {
+            questionsLoaded = false;
+            console.error("QUESTIONS PERMISSION ERROR:", error);
+            throw error;
+        } finally {
+            questionsLoadPromise = null;
+        }
+    })();
+    return questionsLoadPromise;
 }
 let currentExam = null;
 let currentQuestions = [];
@@ -1616,7 +1623,7 @@ async function hasActiveCourseSubscription(courseId) {
     }
 }
 
-async function startCourseExam(examId, courseId) {
+async function startCourseExam(examId, courseId, btn) {
     if (!checkStudentAccess()) return;
 
     try {
@@ -1695,6 +1702,27 @@ if (!hasApprovedEnrollment && !hasActiveSubscription) {
 
         } catch (attemptError) {
             console.error("ATTEMPT CHECK ERROR:", attemptError);
+        }
+
+        const shouldShowQuestionsLoading = btn && !questionsLoaded;
+        const originalBtnText = shouldShowQuestionsLoading ? btn.textContent : null;
+        if (shouldShowQuestionsLoading) {
+            btn.disabled = true;
+            btn.textContent = "Loading questions, please wait...";
+        }
+        try {
+            await ensureQuestionsLoaded();
+        } catch (questionsError) {
+            if (shouldShowQuestionsLoading) {
+                btn.textContent = originalBtnText;
+                btn.disabled = false;
+            }
+            alert("Unable to load exam questions. Please check your connection and try again.");
+            return;
+        }
+        if (shouldShowQuestionsLoading) {
+            btn.textContent = originalBtnText;
+            btn.disabled = false;
         }
 
         const examQuestions = questions.filter(question =>
@@ -3444,7 +3472,7 @@ async function viewEnrolledCourseExams(courseId) {
                     <h3 style="margin:0 0 5px; color:#1e293b;">${escapeHTML(exam.title || exam.name || "Exam")}</h3>
                     <p style="margin:0; color:#64748b; font-size:13px;">Subject: ${escapeHTML(exam.subject || exam.category || "General")} | Marks: ${exam.marks || 0}</p>
                 </div>
-                <button onclick="startCourseExam('${exam.id || exam.firestoreId}', '${courseId}')" class="primary-btn">Start Exam</button>
+                <button onclick="startCourseExam('${exam.id || exam.firestoreId}', '${courseId}', this)" class="primary-btn">Start Exam</button>
             </div>
         `).join("");
 
