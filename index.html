@@ -1,0 +1,652 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RIKON'S EXAM CENTER</title>
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* EMAIL OTP SECTION */
+        .email-otp-wrapper {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .email-otp-wrapper input {
+            width: 100% !important;
+            min-width: 0;
+            max-width: 100%;
+            box-sizing: border-box;
+            display: block;
+            color: #111827 !important;
+            background: #ffffff !important;
+            padding: 12px !important;
+            font-size: 16px !important;
+        }
+
+        .email-otp-wrapper button {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        #otpSection {
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 12px;
+        }
+
+        #studentOtp {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
+            font-size: 16px;
+        }
+    </style>
+    <!-- FIREBASE SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<!-- FIREBASE CONFIG -->
+<script src="firebase-config.js"></script>
+<!-- FIREBASE SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<!-- FIREBASE CONFIG -->
+<script src="firebase-config.js"></script>
+</head>
+
+<body>
+
+    <header>
+        <h1>RIKON'S EXAM CENTER</h1>
+        <p>Your Personal Examination Management System</p>
+    </header>
+
+    <main>
+
+        <section class="welcome">
+            <h2>Welcome to RIKON'S EXAM CENTER</h2>
+            <p>Prepare yourself and achieve your goals.</p>
+
+            <button onclick="showLogin()">Student Login</button>
+            <button onclick="showRegister()">Create Account</button>
+        </section>
+
+       
+<!-- LOGIN -->
+<section id="loginSection" class="auth-section" style="display:none;">
+
+    <h2>Student Login</h2>
+
+    <form id="loginForm">
+
+        <label>Email Address</label>
+        <input type="email" id="loginEmail" required>
+
+        <label>Password</label>
+        <input type="password" id="loginPassword" required>
+
+        <button type="submit">Login</button>
+
+    </form>
+
+    <p style="text-align:right; margin-top:10px;">
+        <a href="#" id="forgotPasswordLink"
+           style="color:#2563eb; text-decoration:none;">
+            Forgot Password?
+        </a>
+    </p>
+
+    <p id="loginMessage"></p>
+    <p id="forgotPasswordMessage"></p>
+
+</section>
+
+
+        <!-- REGISTRATION -->
+        <section id="registerSection" class="auth-section" style="display:none;">
+
+            <h2>Student Registration</h2>
+
+            <form id="registerForm">
+
+                <label>Full Name</label>
+                <input type="text" id="studentName" required>
+
+                <label>Email Address</label>
+
+                <div class="email-otp-wrapper">
+
+                    <input
+                        type="email"
+                        id="studentEmail"
+                        placeholder="Enter your email address"
+                        required
+                    >
+
+                    <button type="button" id="sendOtpBtn">
+                        Send OTP
+                    </button>
+
+                </div>
+
+                <div id="otpSection" style="display:none;">
+
+                    <input
+                        type="text"
+                        id="studentOtp"
+                        placeholder="Enter 4-digit OTP"
+                        maxlength="4"
+                        inputmode="numeric"
+                    >
+
+                    <button type="button" id="verifyOtpBtn">
+                        Verify OTP
+                    </button>
+
+                    <p id="otpMessage"></p>
+
+                </div>
+
+                <label>Mobile Number</label>
+
+                <input
+                    type="tel"
+                    id="studentPhone"
+                    placeholder="01712345678"
+                    pattern="01[3-9][0-9]{8}"
+                    maxlength="11"
+                    inputmode="numeric"
+                    title="Enter a valid 11-digit Bangladesh mobile number"
+                    required
+                >
+
+                <label>Password</label>
+
+                <input
+                    type="password"
+                    id="studentPassword"
+                    minlength="6"
+                    required
+                >
+
+                <button type="submit">Create Account</button>
+
+            </form>
+
+            <p id="registerMessage"></p>
+
+        </section>
+
+    </main>
+
+    <footer>
+        <p>© 2026 RIKON'S EXAM CENTER | All Rights Reserved</p>
+    </footer>
+
+    <script>
+
+        // SHOW LOGIN
+        function showLogin() {
+
+            document.getElementById("loginSection").style.display = "block";
+            document.getElementById("registerSection").style.display = "none";
+
+        }
+
+        // SHOW REGISTRATION
+        function showRegister() {
+
+            document.getElementById("registerSection").style.display = "block";
+            document.getElementById("loginSection").style.display = "none";
+
+        }
+
+        // GET REGISTERED STUDENTS
+        function getStudents() {
+
+            try {
+
+                const students = JSON.parse(
+                    localStorage.getItem("rikon_students") || "[]"
+                );
+
+                return Array.isArray(students) ? students : [];
+
+            } catch (error) {
+
+                return [];
+
+            }
+
+        }
+
+
+        // EMAIL OTP VERIFICATION
+
+        let emailVerified = false;
+        let verifiedEmail = "";
+
+        const sendOtpBtn = document.getElementById("sendOtpBtn");
+        const verifyOtpBtn = document.getElementById("verifyOtpBtn");
+
+        const otpSection = document.getElementById("otpSection");
+        const otpMessage = document.getElementById("otpMessage");
+
+        const studentEmail = document.getElementById("studentEmail");
+        const studentOtp = document.getElementById("studentOtp");
+
+        // SEND OTP
+        sendOtpBtn.addEventListener("click", async function() {
+
+            const email = studentEmail.value.trim().toLowerCase();
+
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+
+                otpSection.style.display = "block";
+
+                otpMessage.style.color = "red";
+                otpMessage.textContent = "Enter a valid email address!";
+
+                return;
+
+            }
+
+            sendOtpBtn.disabled = true;
+            sendOtpBtn.textContent = "Sending...";
+
+            try {
+
+                const response = await fetch(
+                    "http://localhost:3000/api/send-otp",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            email: email
+                        })
+                    }
+                );
+
+                const data = await response.json();
+
+                otpSection.style.display = "block";
+
+                if (data.success) {
+
+                    emailVerified = false;
+                    verifiedEmail = "";
+
+                    studentEmail.disabled = true;
+
+                    studentOtp.disabled = false;
+                    studentOtp.value = "";
+
+                    verifyOtpBtn.disabled = false;
+                    verifyOtpBtn.textContent = "Verify OTP";
+
+                    otpMessage.style.color = "green";
+                    otpMessage.textContent =
+                        "OTP sent successfully! Check your email.";
+
+                    let seconds = 60;
+
+                    sendOtpBtn.textContent = "Resend in 60s";
+
+                    const countdown = setInterval(function() {
+
+                        seconds--;
+
+                        if (seconds <= 0) {
+
+                            clearInterval(countdown);
+
+                            sendOtpBtn.disabled = false;
+                            sendOtpBtn.textContent = "Resend OTP";
+
+                        } else {
+
+                            sendOtpBtn.textContent =
+                                "Resend in " + seconds + "s";
+
+                        }
+
+                    }, 1000);
+
+                } else {
+
+                    otpMessage.style.color = "red";
+                    otpMessage.textContent = data.message;
+
+                    sendOtpBtn.disabled = false;
+                    sendOtpBtn.textContent = "Send OTP";
+
+                }
+
+            } catch (error) {
+
+                otpMessage.style.color = "red";
+                otpMessage.textContent = "Backend connection failed!";
+
+                sendOtpBtn.disabled = false;
+                sendOtpBtn.textContent = "Send OTP";
+
+            }
+
+        });
+
+
+        // VERIFY OTP
+        verifyOtpBtn.addEventListener("click", async function() {
+
+            const email = studentEmail.value.trim().toLowerCase();
+            const otp = studentOtp.value.trim();
+
+            if (!/^\d{4}$/.test(otp)) {
+
+                otpMessage.style.color = "red";
+                otpMessage.textContent = "Enter a valid 4-digit OTP!";
+
+                return;
+
+            }
+
+            verifyOtpBtn.disabled = true;
+            verifyOtpBtn.textContent = "Verifying...";
+
+            try {
+
+                const response = await fetch(
+                    "http://localhost:3000/api/verify-otp",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            email: email,
+                            otp: otp
+                        })
+                    }
+                );
+
+                const data = await response.json();
+
+                if (data.success) {
+
+                    emailVerified = true;
+                    verifiedEmail = email;
+
+                    otpMessage.style.color = "green";
+                    otpMessage.textContent =
+                        "Email verified successfully!";
+
+                    verifyOtpBtn.textContent = "Verified";
+
+                    studentOtp.disabled = true;
+                    verifyOtpBtn.disabled = true;
+
+                } else {
+
+                    otpMessage.style.color = "red";
+                    otpMessage.textContent = data.message;
+
+                    verifyOtpBtn.disabled = false;
+                    verifyOtpBtn.textContent = "Verify OTP";
+
+                }
+
+            } catch (error) {
+
+                otpMessage.style.color = "red";
+                otpMessage.textContent = "Backend connection failed!";
+
+                verifyOtpBtn.disabled = false;
+                verifyOtpBtn.textContent = "Verify OTP";
+
+            }
+
+        });
+
+
+        
+// STUDENT REGISTRATION
+document.getElementById("registerForm").addEventListener("submit", async function(event) {
+
+    event.preventDefault();
+
+    const name = document.getElementById("studentName").value.trim();
+    const email = document.getElementById("studentEmail").value.trim().toLowerCase();
+    const phone = document.getElementById("studentPhone").value.trim();
+    const password = document.getElementById("studentPassword").value;
+    const message = document.getElementById("registerMessage");
+
+    if (!emailVerified || verifiedEmail !== email) {
+        message.style.color = "red";
+        message.textContent = "Please verify your email before creating an account!";
+        return;
+    }
+
+    const phonePattern = /^01[3-9]\d{8}$/;
+
+    if (!phonePattern.test(phone)) {
+        message.style.color = "red";
+        message.textContent = "Please enter a valid 11-digit Bangladesh mobile number!";
+        return;
+    }
+
+    if (password.length < 6) {
+        message.style.color = "red";
+        message.textContent = "Password must contain at least 6 characters!";
+        return;
+    }
+
+    try {
+        message.style.color = "blue";
+        message.textContent = "Creating your account...";
+
+        // CREATE FIREBASE AUTH ACCOUNT
+        const userCredential = await auth.createUserWithEmailAndPassword(
+            email,
+            password
+        );
+
+        const user = userCredential.user;
+
+        // SAVE STUDENT DATA TO FIRESTORE
+        const newStudent = {
+            id: user.uid,
+            name: name,
+            email: email,
+            phone: phone,
+            status: "active",
+            restrictedUntil: 0,
+            restrictionReason: "",
+            createdAt: Date.now()
+        };
+
+        await db.collection("students")
+            .doc(user.uid)
+            .set(newStudent);
+
+        // SAVE CURRENT SESSION INFORMATION
+        localStorage.setItem(
+            "rikon_current_student",
+            JSON.stringify({
+                id: user.uid,
+                name: name,
+                email: email,
+                phone: phone
+            })
+        );
+
+        alert("Account created successfully!");
+
+        window.location.href = "student-dashboard.html";
+
+    } catch (error) {
+        console.error("Student Registration Failed:", error);
+
+        message.style.color = "red";
+
+        if (error.code === "auth/email-already-in-use") {
+            message.textContent = "This email is already registered!";
+        } else if (error.code === "auth/weak-password") {
+            message.textContent = "Password is too weak!";
+        } else {
+            message.textContent = "Registration Failed: " + error.message;
+        }
+    }
+
+});
+
+
+
+        
+// STUDENT LOGIN
+document.getElementById("loginForm").addEventListener("submit", async function(event) {
+
+    event.preventDefault();
+
+    const email = document.getElementById("loginEmail").value.trim().toLowerCase();
+    const password = document.getElementById("loginPassword").value;
+    const message = document.getElementById("loginMessage");
+
+    try {
+        message.style.color = "blue";
+        message.textContent = "Logging in...";
+
+        // FIREBASE AUTHENTICATION
+        const userCredential = await auth.signInWithEmailAndPassword(
+            email,
+            password
+        );
+
+        const user = userCredential.user;
+
+        // GET STUDENT DATA FROM FIRESTORE
+        const studentDoc = await db.collection("students")
+            .doc(user.uid)
+            .get();
+
+        if (!studentDoc.exists) {
+            await auth.signOut();
+
+            message.style.color = "red";
+            message.textContent = "Student account data not found!";
+            return;
+        }
+
+        const student = studentDoc.data();
+
+        // CHECK BLOCK STATUS
+        if (student.status === "blocked") {
+            await auth.signOut();
+
+            message.style.color = "red";
+            message.textContent =
+                "Your account has been blocked by Admin. Please contact Admin.";
+
+            return;
+        }
+
+        // CHECK TEMPORARY RESTRICTION
+        if (Number(student.restrictedUntil || 0) > Date.now()) {
+            await auth.signOut();
+
+            message.style.color = "red";
+            message.textContent =
+                "Your account is temporarily restricted. Reason: " +
+                (student.restrictionReason || "Not specified");
+
+            return;
+        }
+
+        // SAVE CURRENT STUDENT SESSION
+        localStorage.setItem(
+            "rikon_current_student",
+            JSON.stringify({
+                id: user.uid,
+                name: student.name,
+                email: student.email,
+                phone: student.phone || ""
+            })
+        );
+
+        alert("Login successful! Welcome " + student.name);
+
+        window.location.href = "student-dashboard.html";
+
+    } catch (error) {
+        console.error("Student Login Failed:", error);
+
+        message.style.color = "red";
+
+        if (
+            error.code === "auth/user-not-found" ||
+            error.code === "auth/wrong-password" ||
+            error.code === "auth/invalid-credential"
+        ) {
+            message.textContent = "Incorrect email or password!";
+        } else {
+            message.textContent = "Login Failed: " + error.message;
+        }
+    }
+
+});
+
+// FORGOT PASSWORD - FIREBASE EMAIL RESET
+document.getElementById("forgotPasswordLink").addEventListener("click", async function(event) {
+
+    event.preventDefault();
+
+    const email = document.getElementById("loginEmail").value.trim().toLowerCase();
+    const message = document.getElementById("forgotPasswordMessage");
+
+    message.style.color = "red";
+
+    if (!email) {
+        message.textContent = "Please enter your registered email address first.";
+        document.getElementById("loginEmail").focus();
+        return;
+    }
+
+    try {
+        message.style.color = "blue";
+        message.textContent = "Sending password reset link...";
+
+        await auth.sendPasswordResetEmail(email);
+
+        message.style.color = "green";
+        message.textContent =
+            "Password reset link sent! Please check your Gmail inbox.";
+
+    } catch (error) {
+        console.error("Password Reset Error:", error);
+
+        message.style.color = "red";
+
+        if (error.code === "auth/invalid-email") {
+            message.textContent = "Please enter a valid email address.";
+        } else if (error.code === "auth/too-many-requests") {
+            message.textContent = "Too many attempts. Please try again later.";
+        } else {
+            message.textContent = "Unable to send reset link. Please try again.";
+        }
+    }
+});
+
+
+    </script>
+
+</body>
+</html>

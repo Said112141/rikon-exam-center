@@ -1,0 +1,15 @@
+
+{
+  "appId": "com.rikon.examcenter",
+  "appName": "RIKON'S EXAM CENTER",
+  "webDir": "www",
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2500,
+      "launchAutoHide": true,
+      "backgroundColor": "#FFFFFF",
+      "showSpinner": false,
+      "androidScaleType": "CENTER_INSIDE"
+    }
+  }
+}

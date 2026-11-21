@@ -1,0 +1,3675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard | RIKON'S EXAM CENTER</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f0f4fa;
+    color: #1e293b;
+}
+
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 250px;
+    height: 100vh;
+    background: linear-gradient(180deg, #172554, #101b3b);
+    color: white;
+    padding: 25px 15px;
+    overflow-y: auto;
+    box-shadow: 5px 0 25px rgba(15,23,42,.08);
+    z-index: 10;
+}
+
+.sidebar h2 {
+    font-size: 22px;
+    margin-bottom: 8px;
+}
+
+.sidebar p {
+    color: #bfdbfe;
+    font-size: 12px;
+    letter-spacing: 1px;
+    margin-bottom: 30px;
+}
+
+.nav-btn {
+    display: block;
+    width: 100%;
+    padding: 13px;
+    margin-bottom: 7px;
+    border: none;
+    border-left: 3px solid transparent;
+    border-radius: 7px;
+    background: transparent;
+    color: white;
+    text-align: left;
+    cursor: pointer;
+    font-size: 14px;
+    transition: .25s;
+}
+
+.nav-btn:hover {
+    background: rgba(255,255,255,.12);
+    padding-left: 20px;
+}
+
+.nav-btn.active {
+    background: linear-gradient(90deg,#2563eb,#3b82f6);
+    border-left-color: #93c5fd;
+}
+
+.main {
+    margin-left: 250px;
+    padding: 30px;
+}
+
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    gap: 10px;
+}
+
+.topbar h1 {
+    font-size: 25px;
+    font-weight: 750;
+}
+
+.admin-label {
+    background: #dbeafe;
+    color: #1d4ed8;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.stat-card {
+    position: relative;
+    overflow: hidden;
+    background: white;
+    padding: 22px;
+    border-radius: 12px;
+    border: 1px solid #e8eef7;
+    box-shadow: 0 5px 20px rgba(15,23,42,.04);
+    transition: .25s;
+}
+
+.stat-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg,#2563eb,#60a5fa);
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-card p {
+    color: #64748b;
+    font-size: 13px;
+}
+
+.stat-card h2 {
+    margin-top: 12px;
+    font-size: 30px;
+    color: #1d4ed8;
+}
+
+.content-card {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #e8eef7;
+    box-shadow: 0 5px 20px rgba(15,23,42,.035);
+}
+
+.content-card h2 {
+    margin-bottom: 18px;
+    font-size: 20px;
+}
+
+.section {
+    display: none;
+}
+
+.section.active {
+    display: block;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    font-size: 14px;
+    font-family: inherit;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+}
+
+label {
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.primary-btn {
+    background: linear-gradient(135deg,#2563eb,#1d4ed8);
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: .25s;
+}
+
+.primary-btn:hover {
+    transform: translateY(-2px);
+}
+
+.note {
+    background: #eff6ff;
+    color: #1e40af;
+    padding: 13px;
+    border-radius: 7px;
+    margin-bottom: 15px;
+    font-size: 13px;
+}
+
+.menu-toggle {
+    display: none;
+    background: #172554;
+    color: white;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.question-item {
+    padding: 15px;
+    margin: 12px 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.question-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 5px;
+    font-size: 12px;
+}
+
+.edit-question-btn, .edit-exam-btn {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 9px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 10px;
+    margin-right: 5px;
+}
+
+.edit-question-btn:hover, .edit-exam-btn:hover {
+    background: #1d4ed8;
+}
+
+.delete-question-btn, .delete-exam-btn {
+    background: #dc2626;
+    color: white;
+    border: none;
+    padding: 9px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.delete-question-btn:hover, .delete-exam-btn:hover {
+    background: #b91c1c;
+}
+
+@media(max-width:850px) {
+    .sidebar {
+        width: 220px;
+        transform: translateX(-100%);
+        transition: .3s;
+    }
+    .sidebar.open {
+        transform: translateX(0);
+    }
+    .main {
+        margin-left: 0;
+        padding: 18px;
+    }
+    .menu-toggle {
+        display: block;
+    }
+    .stats {
+        grid-template-columns: repeat(2,1fr);
+    }
+}
+
+@media(max-width:600px) {
+    .topbar {
+        flex-wrap: wrap;
+    }
+    .topbar h1 {
+        font-size: 20px;
+    }
+    .content-card {
+        padding: 16px;
+        overflow-x: auto;
+    }
+    .stat-card {
+        padding: 14px;
+    }
+    .stat-card h2 {
+        font-size: 25px;
+    }
+    .admin-label {
+        font-size: 11px;
+    }
+}
+    body.printing-results #results input,
+    body.printing-results #results select,
+    body.printing-results #results button,
+    body.printing-results #results #selectedResultCount,
+    body.printing-results #results label:has(.result-select-checkbox) {
+        display: none !important;
+    }
+@media print {
+
+    body.printing-results * {
+        visibility: hidden !important;
+    }
+
+    body.printing-results #results,
+    body.printing-results #results * {
+        visibility: visible !important;
+    }
+
+    body.printing-results #results {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: white;
+    }
+
+    body.printing-results button {
+        display: none !important;
+    }
+
+}
+/* Hide dashboard until Firebase verifies staff access */
+</style>
+
+body {
+    visibility: hidden;
+}
+<!-- FIREBASE SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script src="../firebase-config.js"></script>
+</head>
+
+<body>
+
+<aside class="sidebar" id="sidebar">
+    <h2>RIKON'S EXAM CENTER</h2>
+    <p>ADMIN MANAGEMENT SYSTEM</p>
+
+    <button type="button" class="nav-btn active" data-page="dashboard">Dashboard</button>
+    <button type="button" class="nav-btn" data-page="exams">Create Exam</button>
+    <button type="button" class="nav-btn" data-page="questions">Question Bank</button>
+    <button type="button" class="nav-btn" data-page="schedule">Exam Schedule</button>
+    <button type="button" class="nav-btn" data-page="students">Students</button>
+    <button
+    type="button"
+    class="nav-btn superadmin-only"
+    data-page="staff">
+    Staff Management
+</button>
+    <button type="button" class="nav-btn" data-page="payments">Payment Management</button>
+    <button type="button" class="nav-btn" data-page="paymentSettings">
+    Payment Settings
+</button>
+    <button type="button" class="nav-btn" data-page="analytics">Performance Analytics</button>
+    <button type="button" class="nav-btn" data-page="results">Results</button>
+    <button type="button" class="nav-btn" data-page="merit">Merit List</button>
+    <button type="button" class="nav-btn" data-page="import">Import Questions</button>
+    <button type="button" class="nav-btn" data-page="notices">Notice Board</button>
+</aside>
+
+<main class="main">
+
+    <div class="topbar">
+        <button type="button" class="menu-toggle" id="menuToggle">☰ Menu</button>
+        <h1 id="pageTitle">Dashboard</h1>
+        <span class="admin-label">Admin Panel</span>
+    </div>
+
+    <!-- DASHBOARD -->
+    <section class="section active" id="dashboard">
+        <div class="stats">
+            <div class="stat-card">
+                <p>Total Exams</p>
+                <h2 id="totalExams">0</h2>
+            </div>
+            <div class="stat-card">
+                <p>Total Questions</p>
+                <h2 id="totalQuestions">0</h2>
+            </div>
+            <div class="stat-card">
+                <p>Total Students</p>
+                <h2 id="totalStudents">0</h2>
+            </div>
+            <div class="stat-card">
+                <p>Results Published</p>
+                <h2>0</h2>
+            </div>
+        </div>
+
+        <div class="content-card">
+            <h2>Welcome, Administrator!</h2>
+            <p>Manage your examinations from one place.</p>
+            <br>
+            <button type="button" class="primary-btn" onclick="showPage('exams')">+ Create New Exam</button>
+        </div>
+
+        <div class="content-card">
+            <h2>Recent Examinations</h2>
+            <div id="recentExams">No examinations created yet.</div>
+        </div>
+        <!-- DATA BACKUP & RESTORE -->
+<div class="content-card">
+
+    <h2>Data Backup & Restore</h2>
+
+    <p>Protect your examination center data.</p>
+
+    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:15px;">
+
+        <button
+            type="button"
+            onclick="backupAllData()"
+            style="background:#2563eb; color:white; padding:12px 18px; border:none; border-radius:6px; cursor:pointer;">
+            ⬇ Download Backup
+        </button>
+
+        <button
+            type="button"
+            onclick="document.getElementById('restoreBackupFile').click()"
+            style="background:#16a34a; color:white; padding:12px 18px; border:none; border-radius:6px; cursor:pointer;">
+            ⬆ Restore Backup
+        </button>
+
+        <input
+    type="file"
+    id="restoreBackupFile"
+    accept=".json,application/json"
+    onchange="restoreAllData(event)"
+    style="display:none;">
+
+    </div>
+
+    <p style="margin-top:12px; color:#64748b; font-size:13px;">
+        Backup your exams, questions, students, results and notices.
+    </p>
+
+</div>
+    </section>
+<!-- NOTICE BOARD SECTION -->
+<section class="section" id="notices">
+
+    <div class="content-card">
+        <h2>Notice Board Management</h2>
+        <p>Create and manage announcements for students.</p>
+
+        <form id="noticeForm">
+
+            <input
+                type="text"
+                id="noticeTitle"
+                placeholder="Notice Title"
+                required
+            >
+
+            <textarea
+                id="noticeDescription"
+                placeholder="Write notice details..."
+                required
+            ></textarea>
+
+            <select id="noticePriority" required>
+                <option value="normal">Normal Notice</option>
+                <option value="important">Important Notice</option>
+                <option value="urgent">Urgent Notice</option>
+            </select>
+
+            <button type="submit" class="primary-btn">
+                Publish Notice
+            </button>
+
+        </form>
+
+        <p id="noticeMessage"></p>
+    </div>
+
+    <div class="content-card">
+        <h2>Published Notices</h2>
+        <div id="noticeList">
+            No notices published yet.
+        </div>
+    </div>
+
+</section>
+    
+    <!-- CREATE EXAM -->
+    <section class="section" id="exams">
+        <div class="content-card">
+            <h2>Create New Examination</h2>
+            <form id="examForm">
+                <label>Exam Name</label>
+                <input id="examName" type="text" placeholder="Example: DU B Unit Model Test 01" required>
+
+                <label>Subject / Category</label>
+                <select id="examCategory">
+                    <option>Admission Test</option>
+                    <option>Bangla</option>
+                    <option>English</option>
+                    <option>Mathematics</option>
+                    <option>General Knowledge</option>
+                    <option>Full Model Test</option>
+                </select>
+
+<label>Exam Payment Type</label>
+<select id="examPaymentType">
+    <option value="free">Free Exam</option>
+    <option value="paid">Paid Exam</option>
+</select>
+
+<label>Exam Fee (BDT)</label>
+<input
+    type="number"
+    id="examFee"
+    min="0"
+    step="1"
+    placeholder="Enter exam fee"
+    value="0"
+>
+
+                <label>Exam Date & Time</label>
+                <input id="examDate" type="datetime-local" required>
+
+                <label>Duration (Minutes)</label>
+                <input id="examDuration" type="number" min="1" placeholder="45" required>
+
+                <label>Total Marks</label>
+                <input id="examMarks" type="number" min="1" placeholder="60" required>
+
+                <label>Negative Marking per Wrong Answer</label>
+                <input id="negativeMark" type="number" min="0" step="0.01" value="0.25">
+
+                <button class="primary-btn" type="submit">Create Examination</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- QUESTION BANK -->
+    <section class="section" id="questions">
+        <div class="content-card">
+            <h2>Question Bank Management</h2>
+            <form id="questionForm">
+                <label>Select Examination</label>
+                <select id="questionExam" required>
+                    <option value="">Select an exam</option>
+                </select>
+
+                <label>Question Type</label>
+                <select id="questionType" required>
+                    <option value="mcq">MCQ Question</option>
+                    <option value="written">Written Question</option>
+                </select>
+
+                <label>Question</label>
+                <textarea id="questionText" rows="4" placeholder="Write your question here..." required></textarea>
+
+                <div id="mcqFields">
+                    <h3 style="margin:20px 0 12px;">MCQ Options</h3>
+                    <label>Option A</label>
+                    <input id="optionA" placeholder="Option A">
+                    <label>Option B</label>
+                    <input id="optionB" placeholder="Option B">
+                    <label>Option C</label>
+                    <input id="optionC" placeholder="Option C">
+                    <label>Option D</label>
+                    <input id="optionD" placeholder="Option D">
+                    <label>Correct Answer</label>
+                    <select id="correctAnswer">
+                        <option value="">Select correct answer</option>
+                        <option value="A">Option A</option>
+                        <option value="B">Option B</option>
+                        <option value="C">Option C</option>
+                        <option value="D">Option D</option>
+                    </select>
+                </div>
+
+                <div id="writtenFields" style="display:none;">
+                    <h3 style="margin:20px 0 12px;">Written Answer Settings</h3>
+                    <label>Answer Instructions</label>
+                    <textarea id="answerInstructions" rows="3" placeholder="Example: Answer in 200 words."></textarea>
+                    <div class="note">
+                        Students will be able to type answers or upload handwritten answer images/PDF files. Teachers will evaluate written answers manually.
+                    </div>
+                </div>
+
+                <label>Question Marks</label>
+                <input id="questionMarks" type="number" min="0.01" step="0.01" value="1" required>
+
+                <button class="primary-btn" id="questionSubmitBtn" type="submit">+ Add Question</button>
+                <button class="primary-btn" id="cancelEditBtn" type="button" style="display:none;background:#64748b; margin-top:10px;">Cancel Edit</button>
+            </form>
+
+            <h2 style="margin-top:30px;">Question Summary</h2>
+            <div id="questionSummary">No questions added yet.</div>
+        </div>
+    </section>
+
+    <!-- SCHEDULE -->
+    <section class="section" id="schedule">
+        <div class="content-card">
+            <h2>Examination Schedule</h2>
+            <div id="scheduleList">No scheduled exams.</div>
+        </div>
+    </section>
+
+    <!-- STUDENTS -->
+    <section class="section" id="students">
+        <div class="content-card">
+            <h2>Student Management</h2>
+            <div class="note">View all registered students and their contact information.</div>
+            <h3 style="margin-bottom:15px;">Total Registered Students: <span id="studentCount">0</span></h3>
+            <input type="text" id="studentSearch" placeholder="Search by name, email or mobile number...">
+            <div id="studentList">No students registered yet.</div>
+        </div>
+    </section>
+    <!-- PAYMENT MANAGEMENT -->
+
+<section class="section" id="payments">
+
+    <div class="content-card">
+
+        <h2>Payment Management</h2>
+
+        <div class="note">
+            Review and manage student examination payments.
+        </div>
+<!-- PAYMENT STATISTICS -->
+
+<div class="stats" style="margin:20px 0;">
+
+    <div class="stat-card">
+        <p>Total Payments</p>
+        <h2 id="totalPayments">0</h2>
+    </div>
+
+    <div class="stat-card">
+        <p>Pending Payments</p>
+        <h2 id="pendingPayments">0</h2>
+    </div>
+
+    <div class="stat-card">
+        <p>Approved Payments</p>
+        <h2 id="approvedPayments">0</h2>
+    </div>
+
+    <div class="stat-card">
+        <p>Rejected Payments</p>
+        <h2 id="rejectedPayments">0</h2>
+    </div>
+
+    <div class="stat-card">
+        <p>Total Revenue</p>
+        <h2 id="totalRevenue">৳0</h2>
+    </div>
+
+</div>
+        <div id="paymentList">
+            Loading payments...
+        </div>
+
+    </div>
+
+</section>
+<!-- PAYMENT SETTINGS -->
+
+<section class="section" id="paymentSettings">
+
+    <div class="content-card">
+
+        <h2>Payment Settings</h2>
+
+        <p>Set your payment receiving numbers.</p>
+
+        <label>bKash Number</label>
+        <input
+            type="tel"
+            id="adminBkashNumber"
+            placeholder="Enter bKash number"
+        >
+
+        <label>Nagad Number</label>
+        <input
+            type="tel"
+            id="adminNagadNumber"
+            placeholder="Enter Nagad number"
+        >
+
+        <label>Rocket Number</label>
+        <input
+            type="tel"
+            id="adminRocketNumber"
+            placeholder="Enter Rocket number"
+        >
+
+        <button type="button" onclick="savePaymentSettings()">
+            Save Payment Settings
+        </button>
+
+    </div>
+
+</section>
+
+<!-- STAFF MANAGEMENT -->
+<section class="section" id="staff">
+
+    <div class="content-card">
+
+        <h2>Staff Management</h2>
+
+        <div class="note">
+            Manage Admin and Moderator accounts.
+            Only Super Admin can access this section.
+        </div>
+
+        <div id="staffManagementMessage"
+             style="margin-top:15px; color:#64748b;">
+            Loading staff accounts...
+        </div>
+
+        <div id="staffList" style="margin-top:20px;">
+            No staff accounts available.
+        </div>
+
+    </div>
+
+</section>
+
+    <!-- STUDENT PERFORMANCE ANALYTICS -->
+    <section class="section" id="analytics">
+
+        <div class="content-card">
+
+            <h2>Student Performance Analytics</h2>
+
+            <div class="note">
+                Analyze student examination performance and rankings.
+            </div>
+
+            <div class="stats">
+
+                <div class="stat-card">
+                    <p>Total Students</p>
+                    <h2 id="analyticsStudents">0</h2>
+                </div>
+
+                <div class="stat-card">
+                    <p>Total Results</p>
+                    <h2 id="analyticsResults">0</h2>
+                </div>
+
+                <div class="stat-card">
+                    <p>Average Marks</p>
+                    <h2 id="analyticsAverage">0%</h2>
+                </div>
+
+                <div class="stat-card">
+                    <p>Highest Marks</p>
+                    <h2 id="analyticsHighest">0%</h2>
+                </div>
+
+            </div>
+
+            <h3 style="margin-top:25px;">Top 10 Students</h3>
+
+            <div id="analyticsTopStudents">
+                No performance data available.
+            </div>
+<h3 style="margin-top:30px;">Student Performance Chart</h3>
+
+<div id="analyticsChart"
+     style="margin-top:15px;">
+    No chart data available.
+</div>
+<h3 style="margin-top:30px;">Subject-wise Performance</h3>
+
+<div id="subjectAnalytics" style="margin-top:15px;">
+    No subject data available.
+</div>
+        </div>
+
+    </section>
+    <!-- RESULTS -->
+    <section class="section" id="results">
+        <div class="content-card">
+            <h2>Examination Results</h2>
+            <div class="note">View submitted examination results and evaluate students' written answers.</div>
+           <div style="display:flex; flex-wrap:wrap; gap:12px; margin:20px 0;">
+
+    <input
+        type="text"
+        id="resultSearch"
+        placeholder="Search student name, ID or email..."
+        style="flex:1; min-width:220px;"
+    >
+
+    <select id="resultExamFilter" style="flex:1; min-width:200px;">
+        <option value="">All Examinations</option>
+    </select>
+
+    <button
+    type="button"
+    onclick="resetResultFilters()"
+    style="background:#16a34a; color:red; border:none; padding:10px 18px; border-radius:6px; cursor:pointer;">
+    Reset Filter
+</button>
+<button
+    type="button"
+    onclick="exportResultsCSV()"
+    style="background:#2563eb; color:white; border:none; padding:10px 18px; border-radius:6px; cursor:pointer;">
+    <span>⬇ Export Results</span>
+</button>
+</div>
+<!-- BULK RESULT DELETE CONTROLS -->
+
+<div style="display:flex; gap:10px; flex-wrap:wrap; margin:15px 0;">
+
+    <button
+        type="button"
+        onclick="selectAllResults(true)"
+        style="background:#2563eb; color:white;">
+        Select All
+    </button>
+
+    <button
+        type="button"
+        onclick="selectAllResults(false)"
+        style="background:#64748b; color:white;">
+        Deselect All
+    </button>
+
+    <button
+        type="button"
+        onclick="deleteSelectedResults()"
+        style="background:#ea580c; color:white;">
+        Delete Selected
+    </button>
+
+    <button
+        type="button"
+        onclick="deleteAllResults()"
+        style="background:#dc2626; color:white;">
+        Delete All Results
+    </button>
+
+</div>
+
+<p id="selectedResultCount" style="font-weight:bold; color:#2563eb;">
+    Selected Results: 0
+</p>
+<!-- RESULT PRINT BUTTON -->
+
+<div style="margin:15px 0;">
+
+    <button
+        type="button"
+        onclick="printResults()"
+        style="background:#2563eb; color:white; padding:12px 18px; border:none; border-radius:6px; cursor:pointer;">
+
+        🖨️ Print Results
+
+    </button>
+
+</div>
+            <div id="resultsList">No student results available yet.</div>
+        </div>
+    </section>
+
+    <!-- MERIT LIST -->
+    <section class="section" id="merit">
+        <div class="content-card">
+            <h2>Automatic Merit List</h2>
+            <div class="note">Students are ranked automatically according to their final marks.</div>
+            <br>
+            <label>Select Examination</label>
+            <select id="meritExamSelect" onchange="renderMeritList()">
+                <option value="">Select an examination</option>
+            </select>
+            <br><br>
+            <div id="meritListContainer">
+                <p>Please select an examination to view the merit list.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- IMPORT -->
+    <section class="section" id="import">
+        <div class="content-card">
+            <h2>Import Questions</h2>
+            <div class="note">Word and Excel question import will be implemented after the question bank is ready.</div>
+            <label>Select Word or Excel File</label>
+            <input type="file" accept=".docx,.xlsx,.xls">
+            <p style="font-size:12px;color:#64748b;">Supported formats planned: DOCX, XLSX and XLS. File processing is not enabled yet.</p>
+        </div>
+    </section>
+
+</main>
+
+<script>
+
+let examList = [];
+let questionList = [];
+let editingQuestionId = null;
+
+// LOAD EXAMS AND QUESTIONS FROM FIREBASE
+async function loadFirebaseExamData() {
+
+    try {
+
+        const examSnapshot = await adminDb
+            .collection("exams")
+            .get();
+
+        examList = examSnapshot.docs
+            .sort((a, b) => {
+                const aIndex = Number(a.id.replace("legacy_", ""));
+                const bIndex = Number(b.id.replace("legacy_", ""));
+                return aIndex - bIndex;
+            })
+            .map(doc => ({
+    ...doc.data(),
+    firestoreId: doc.id
+}));
+
+        const questionSnapshot = await adminDb
+            .collection("questions")
+            .get();
+
+        questionList = questionSnapshot.docs
+            .sort((a, b) => {
+                const aIndex = Number(a.id.replace("legacy_", ""));
+                const bIndex = Number(b.id.replace("legacy_", ""));
+                return aIndex - bIndex;
+            })
+            .map(doc => ({
+    ...doc.data(),
+    firestoreId: doc.id
+}));
+
+        console.log("Firebase Exams Loaded:", examList.length);
+        console.log("Firebase Questions Loaded:", questionList.length);
+
+    } catch (error) {
+
+        console.error("Firebase Data Loading Error:", error);
+
+        throw error;
+
+    }
+}
+
+
+
+async function saveData() {
+    try {
+        const batch = adminDb.batch();
+
+        const [examSnapshot, questionSnapshot] = await Promise.all([
+            adminDb.collection("exams").get(),
+            adminDb.collection("questions").get()
+        ]);
+
+        // Save Exams
+        examList.forEach((exam, index) => {
+            batch.set(
+                adminDb.collection("exams").doc("legacy_" + index),
+                exam
+            );
+        });
+
+        // Remove only deleted Exams
+        examSnapshot.docs.forEach(doc => {
+            const index = Number(doc.id.replace("legacy_", ""));
+            if (doc.id.startsWith("legacy_") && index >= examList.length) {
+                batch.delete(doc.ref);
+            }
+        });
+
+        // Save Questions
+        questionList.forEach((question, index) => {
+            batch.set(
+                adminDb.collection("questions").doc("legacy_" + index),
+                question
+            );
+        });
+
+        // Remove only deleted Questions
+        questionSnapshot.docs.forEach(doc => {
+            const index = Number(doc.id.replace("legacy_", ""));
+            if (doc.id.startsWith("legacy_") && index >= questionList.length) {
+                batch.delete(doc.ref);
+            }
+        });
+
+        await batch.commit();
+
+
+        console.log("Firebase data saved successfully!");
+
+    } catch (error) {
+        console.error("Firebase Save Error:", error);
+        alert("Firebase-এ Data Save করা যায়নি: " + error.message);
+        throw error;
+    }
+}
+
+
+
+const titles = {
+    dashboard: "Dashboard",
+    exams: "Create Examination",
+    questions: "Question Bank",
+    schedule: "Exam Schedule",
+    students: "Student Management",
+    staff: "Staff Management",
+    analytics: "Student Performance Analytics",
+    results: "Examination Results",
+    merit: "Automatic Merit List",
+    import: "Import Questions",
+    notices: "Notice Board",
+};
+
+// ===================================
+// SUPER ADMIN - STAFF LIST
+// ===================================
+
+async function renderStaffList() {
+
+    const container = document.getElementById("staffList");
+    const message = document.getElementById("staffManagementMessage");
+
+    if (!container || !message) return;
+
+    try {
+
+        const currentUser = adminAuth.currentUser;
+
+        if (!currentUser) {
+            message.textContent = "Please login first.";
+            container.innerHTML = "";
+            return;
+        }
+
+        const myDoc = await adminDb
+            .collection("users")
+            .doc(currentUser.uid)
+            .get();
+
+        if (
+            !myDoc.exists ||
+            myDoc.data().role !== "superadmin" ||
+            myDoc.data().status !== "active"
+        ) {
+            message.textContent = "Access denied.";
+            container.innerHTML = "";
+            return;
+        }
+
+        message.textContent = "Staff accounts loaded successfully.";
+
+        const snapshot = await adminDb
+            .collection("users")
+            .get();
+
+        const staffMembers = [];
+
+        snapshot.forEach(doc => {
+
+            const staff = doc.data();
+
+            if (
+                staff.role === "admin" ||
+                staff.role === "moderator"
+            ) {
+                staffMembers.push({
+                    id: doc.id,
+                    ...staff
+                });
+            }
+
+        });
+
+        if (staffMembers.length === 0) {
+            container.textContent = "No Admin or Moderator accounts found.";
+            return;
+        }
+
+        container.innerHTML = staffMembers.map(staff => `
+            <div class="content-card" style="margin-top:15px;">
+
+                <h3>${escapeHTML(staff.name || "Unnamed Staff")}</h3>
+
+                <p><strong>Email:</strong>
+                    ${escapeHTML(staff.email || "N/A")}
+                </p>
+
+                <p><strong>Role:</strong>
+                    ${escapeHTML(staff.role)}
+                </p>
+
+                <p><strong>Status:</strong>
+                    ${escapeHTML(staff.status || "N/A")}
+                </p>
+
+            </div>
+        `).join("");
+
+    } catch (error) {
+
+        console.error("Staff List Error:", error);
+
+        message.textContent = "Unable to load staff accounts.";
+        container.textContent = error.message;
+
+    }
+
+}
+
+function showPage(page) {
+    document.querySelectorAll(".section").forEach(section => {
+        section.classList.remove("active");
+    });
+    const selectedPage = document.getElementById(page);
+    if (!selectedPage) return;
+    selectedPage.classList.add("active");
+    if (page === "students") {
+    
+        renderStudentList();
+}
+if (page === "results") {
+    renderResults();
+}
+if (page === "payments") {
+    renderPayments();
+}
+if (page === "paymentSettings") {
+    loadPaymentSettings();
+}
+    if (page === "analytics") {
+    renderAnalytics();
+}
+if (page === "staff") {
+    renderStaffList();
+}
+    document.querySelectorAll(".nav-btn").forEach(button => {
+        button.classList.toggle("active", button.dataset.page === page);
+    });
+    document.getElementById("pageTitle").textContent = titles[page] || "Dashboard";
+    document.getElementById("sidebar").classList.remove("open");
+}
+
+document.querySelectorAll(".nav-btn").forEach(button => {
+    button.addEventListener("click", () => {
+        showPage(button.dataset.page);
+    });
+});
+
+document.getElementById("menuToggle").addEventListener("click", () => {
+    document.getElementById("sidebar").classList.toggle("open");
+});
+
+function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[char]);
+}
+
+const questionType = document.getElementById("questionType");
+const mcqFields = document.getElementById("mcqFields");
+const writtenFields = document.getElementById("writtenFields");
+
+function toggleQuestionType() {
+    const isMCQ = questionType.value === "mcq";
+    mcqFields.style.display = isMCQ ? "block" : "none";
+    writtenFields.style.display = isMCQ ? "none" : "block";
+    ["optionA", "optionB", "optionC", "optionD", "correctAnswer"].forEach(id => {
+        document.getElementById(id).required = isMCQ;
+    });
+}
+questionType.addEventListener("change", toggleQuestionType);
+
+function updateExamDropdown() {
+    const select = document.getElementById("questionExam");
+    const previousValue = select.value;
+    select.innerHTML = '<option value="">Select an exam</option>';
+    examList.forEach((exam, index) => {
+        const option = document.createElement("option");
+        option.value = index;
+        option.textContent = exam.name;
+        select.appendChild(option);
+    });
+    if (previousValue !== "" && examList[Number(previousValue)]) {
+        select.value = previousValue;
+    }
+}
+
+// ===================================
+// ADMIN RESULTS MANAGEMENT
+// ===================================
+
+async function renderResults() {
+
+    const container = document.getElementById("resultsList");
+
+    if (!container) return;
+// RESULTS SEARCH & EXAM FILTER
+
+const searchInput = document.getElementById("resultSearch");
+const examFilter = document.getElementById("resultExamFilter");
+
+if (examFilter) {
+
+    const exams = examList;
+
+    const previousValue = examFilter.value;
+
+    examFilter.innerHTML =
+        '<option value="">All Examinations</option>' +
+        exams.map(exam => `
+            <option value="${escapeHTML(exam.name)}">
+                ${escapeHTML(exam.name)}
+            </option>
+        `).join("");
+
+    examFilter.value = previousValue;
+}
+
+if (searchInput) {
+    searchInput.oninput = renderResults;
+}
+
+if (examFilter) {
+    examFilter.onchange = renderResults;
+}
+
+const searchText = searchInput
+    ? searchInput.value.trim().toLowerCase()
+    : "";
+
+const selectedExam = examFilter
+    ? examFilter.value
+    : "";
+       let results = [];
+
+    try {
+
+        const resultSnapshot = await adminDb
+            .collection("results")
+            .get();
+
+        results = resultSnapshot.docs.map(doc => ({
+            ...doc.data(),
+            firestoreId: doc.id
+        }));
+
+        console.log("FIREBASE RESULTS LOADED:", results.length);
+
+    } catch (error) {
+
+        console.error("FIREBASE RESULTS LOAD ERROR:", error);
+
+        container.innerHTML = `
+            <p>Unable to load results. Please try again.</p>
+        `;
+
+        return;
+    }
+
+    if (!Array.isArray(results) || results.length === 0) {
+        container.innerHTML = "<p>No student results available yet.</p>";
+        return;
+    }
+
+    const filteredResults = results.filter(result => {
+
+    const matchesSearch =
+        String(result.studentName || "").toLowerCase().includes(searchText) ||
+        String(result.studentId || "").toLowerCase().includes(searchText) ||
+        String(result.studentEmail || "").toLowerCase().includes(searchText);
+
+    const matchesExam =
+        !selectedExam ||
+        String(result.examName || "") === selectedExam;
+
+    return matchesSearch && matchesExam;
+
+});
+
+container.innerHTML = filteredResults.map(result => {
+
+        const answers = Array.isArray(result.answers)
+            ? result.answers
+            : [];
+
+        const evaluations = result.writtenEvaluations || {};
+
+        const evaluatedMarks = Object.values(evaluations)
+            .reduce((sum, value) => sum + (Number(value) || 0), 0);
+
+        const finalMarks = Number(result.obtainedMarks || 0) + evaluatedMarks;
+
+        return `
+            <div class="question-item" style="margin-top:15px;">
+<label style="display:flex; align-items:center; gap:8px; margin-bottom:12px; color:#2563eb; font-weight:bold;">
+
+    <input
+        type="checkbox"
+        class="result-select-checkbox"
+        value="${result.id}"
+        onchange="updateSelectedResultCount()"
+        style="width:18px; height:18px;"
+    >
+
+    Select This Result
+
+</label>
+                <h3>${escapeHTML(result.studentName || "Unknown Student")}</h3>
+
+                <p><strong>Student ID:</strong> ${escapeHTML(result.studentId)}</p>
+
+                <p><strong>Email:</strong> ${escapeHTML(result.studentEmail)}</p>
+
+                <p><strong>Exam:</strong> ${escapeHTML(result.examName)}</p>
+
+                <p><strong>Date:</strong> ${escapeHTML(result.date)}</p>
+<p style="color:#dc2626; font-weight:bold;">
+    ⚠ Tab Switching Warnings:
+    ${Number(result.tabSwitchWarnings || 0)}
+</p>
+                <p><strong>MCQ Marks:</strong> ${Number(result.obtainedMarks || 0)}</p>
+
+                <p><strong>Final Marks:</strong> ${finalMarks} / ${Number(result.totalMarks || 0)}</p>
+<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
+
+    <button
+        type="button"
+        onclick="editResult('${result.id}')"
+        style="background:#2563eb;">
+        Edit Result
+    </button>
+
+    <button
+        type="button"
+        onclick="deleteResult('${result.id}')"
+        style="background:#dc2626;">
+        Delete Result
+    </button>
+
+</div>
+                <hr>
+
+                <h4>Submitted Answers</h4>
+
+                ${answers.map((answer, index) => {
+
+                    const isWritten = answer.type === "written";
+
+                    return `
+                        <div style="padding:12px; margin-top:10px; background:#f1f5f9; border-radius:8px;">
+
+                            <p><strong>Question ${index + 1}:</strong>
+                            ${escapeHTML(answer.question || "")}</p>
+
+                            <p><strong>Type:</strong> ${escapeHTML(answer.type || "")}</p>
+
+                            <p><strong>Student Answer:</strong></p>
+
+                            <p style="white-space:pre-wrap;">
+                                ${escapeHTML(answer.answer || "No answer submitted")}
+                            </p>
+
+                            ${isWritten ? `
+                                <p><strong>Maximum Marks:</strong> ${Number(answer.marks || 0)}</p>
+
+                                <p><strong>Evaluated Marks:</strong>
+                                ${evaluations[index] !== undefined ? evaluations[index] : "Pending"}
+                                </p>
+
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="${Number(answer.marks || 0)}"
+                                    step="0.01"
+                                    placeholder="Enter marks"
+                                    id="writtenMark_${result.id}_${index}"
+                                >
+
+                                <button
+                                    type="button"
+                                    data-action="evaluate-written"
+                                    data-result-id="${result.id}"
+                                    data-answer-index="${index}">
+                                    Save Evaluation
+                                </button>
+                            ` : `
+                                <p><strong>Correct Answer:</strong>
+                                ${escapeHTML(answer.correct || "")}</p>
+                            `}
+
+                        </div>
+                    `;
+
+                }).join("")}
+
+            </div>
+        `;
+
+    }).join("");
+
+    
+container.onclick = async function(event) {
+
+    const button = event.target.closest(
+        'button[data-action="evaluate-written"]'
+    );
+
+    if (!button) return;
+
+    const resultId = button.dataset.resultId;
+    const answerIndex = Number(button.dataset.answerIndex);
+
+    try {
+
+        // FIND RESULT IN FIREBASE
+        const resultSnapshot = await adminDb
+            .collection("results")
+            .where("id", "==", Number(resultId))
+            .get();
+
+        if (resultSnapshot.empty) {
+            alert("Result not found in Firebase!");
+            return;
+        }
+
+        const resultDoc = resultSnapshot.docs[0];
+        const result = resultDoc.data();
+
+        const answer = result.answers?.[answerIndex];
+
+        if (!answer || answer.type !== "written") return;
+
+        const input = document.getElementById(
+            `writtenMark_${resultId}_${answerIndex}`
+        );
+
+        if (!input) {
+            alert("Marks input not found!");
+            return;
+        }
+
+        const marks = Number(input.value);
+        const maximumMarks = Number(answer.marks);
+
+        if (
+            input.value.trim() === "" ||
+            !Number.isFinite(marks) ||
+            marks < 0 ||
+            marks > maximumMarks
+        ) {
+            alert("Please enter valid marks within the maximum marks.");
+            return;
+        }
+
+        // UPDATE WRITTEN EVALUATION
+        const evaluations = result.writtenEvaluations || {};
+
+        evaluations[answerIndex] = marks;
+
+        const writtenMarks = Object.values(evaluations)
+            .reduce((sum, value) => sum + Number(value || 0), 0);
+
+        const finalMarks =
+            Number(result.obtainedMarks || 0) + writtenMarks;
+
+        await resultDoc.ref.update({
+            writtenEvaluations: evaluations,
+            finalMarks: finalMarks
+        });
+
+        alert("Written answer evaluated successfully!");
+
+        await renderResults();
+
+    } catch (error) {
+
+        console.error("WRITTEN EVALUATION ERROR:", error);
+
+        alert("Unable to save written marks: " + error.message);
+
+    }
+};
+
+}
+// ===================================
+// BULK RESULT SELECTION SYSTEM
+// ===================================
+
+function updateSelectedResultCount() {
+
+    const checkboxes = document.querySelectorAll(
+        ".result-select-checkbox:checked"
+    );
+
+    const countElement = document.getElementById(
+        "selectedResultCount"
+    );
+
+    if (countElement) {
+        countElement.textContent =
+            "Selected Results: " + checkboxes.length;
+    }
+}
+
+
+// SELECT ALL / DESELECT ALL
+
+function selectAllResults(select) {
+
+    const checkboxes = document.querySelectorAll(
+        ".result-select-checkbox"
+    );
+
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = select;
+    });
+
+    updateSelectedResultCount();
+}
+// ===================================
+// DELETE SELECTED RESULTS
+// ===================================
+
+async function deleteSelectedResults() {
+
+    const selectedCheckboxes = document.querySelectorAll(
+        ".result-select-checkbox:checked"
+    );
+
+    const selectedIds = Array.from(selectedCheckboxes)
+        .map(checkbox => String(checkbox.value));
+
+    if (selectedIds.length === 0) {
+        alert("Please select at least one result.");
+        return;
+    }
+
+    if (!confirm(
+        "Are you sure you want to delete " +
+        selectedIds.length + " selected result(s)?"
+    )) {
+        return;
+    }
+
+    try {
+
+        const resultSnapshot = await adminDb
+            .collection("results")
+            .get();
+
+        const selectedDocs = resultSnapshot.docs.filter(doc =>
+            selectedIds.includes(String(doc.data().id))
+        );
+
+        if (selectedDocs.length === 0) {
+            alert("Selected results not found!");
+            return;
+        }
+
+        const batch = adminDb.batch();
+
+        selectedDocs.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+
+        await batch.commit();
+
+        alert("Selected results deleted successfully!");
+
+        await renderResults();
+
+    } catch (error) {
+
+        console.error("BULK DELETE ERROR:", error);
+
+        alert("Unable to delete selected results: " + error.message);
+
+    }
+}
+// ===================================
+// DELETE ALL RESULTS
+// ===================================
+
+
+async function deleteAllResults() {
+
+    try {
+
+        // LOAD ALL RESULTS FROM FIREBASE
+        const snapshot = await adminDb
+            .collection("results")
+            .get();
+
+        if (snapshot.empty) {
+            alert("No results available to delete.");
+            return;
+        }
+
+        const totalResults = snapshot.size;
+
+        if (!confirm(
+            "WARNING!\n\nAre you sure you want to DELETE ALL " +
+            totalResults +
+            " results?\n\nThis action cannot be undone!"
+        )) {
+            return;
+        }
+
+        // DELETE RESULTS IN BATCHES
+        const docs = snapshot.docs;
+
+        for (let i = 0; i < docs.length; i += 500) {
+
+            const batch = adminDb.batch();
+
+            docs.slice(i, i + 500).forEach(doc => {
+                batch.delete(doc.ref);
+            });
+
+            await batch.commit();
+        }
+
+        alert("All examination results deleted successfully!");
+
+        await renderResults();
+
+    } catch (error) {
+
+        console.error("DELETE ALL RESULTS ERROR:", error);
+
+        alert("Unable to delete results: " + error.message);
+
+    }
+}
+
+// PRINT RESULTS SAFELY
+
+function printResults() {
+
+    document.body.classList.add("printing-results");
+
+    window.print();
+
+    window.addEventListener("afterprint", function() {
+        document.body.classList.remove("printing-results");
+    }, { once: true });
+
+}
+
+
+// ===================================
+// EDIT RESULT
+// ===================================
+
+async function editResult(resultId) {
+
+    try {
+
+        const resultSnapshot = await adminDb
+            .collection("results")
+            .where("id", "==", Number(resultId))
+            .get();
+
+        if (resultSnapshot.empty) {
+            alert("Result not found!");
+            return;
+        }
+
+        const resultDoc = resultSnapshot.docs[0];
+        const result = resultDoc.data();
+
+        const newMarks = prompt(
+            "Enter new MCQ Marks:",
+            result.obtainedMarks
+        );
+
+        if (newMarks === null) return;
+
+        const marks = Number(newMarks);
+
+        if (
+            newMarks.trim() === "" ||
+            !Number.isFinite(marks) ||
+            marks < 0 ||
+            marks > Number(result.totalMarks)
+        ) {
+            alert("Please enter valid marks.");
+            return;
+        }
+
+        const writtenMarks = Object.values(
+            result.writtenEvaluations || {}
+        ).reduce((sum, value) => sum + Number(value || 0), 0);
+
+        await resultDoc.ref.update({
+            obtainedMarks: marks,
+            finalMarks: marks + writtenMarks
+        });
+
+        alert("Result updated successfully!");
+
+        await renderResults();
+
+    } catch (error) {
+
+        console.error("RESULT EDIT ERROR:", error);
+
+        alert("Unable to update result: " + error.message);
+
+    }
+}
+
+
+// ===================================
+// DELETE RESULT
+// ===================================
+
+async function deleteResult(resultId) {
+
+    if (!confirm(
+        "Are you sure you want to permanently delete this result?"
+    )) {
+        return;
+    }
+
+    try {
+
+        const resultSnapshot = await adminDb
+            .collection("results")
+            .where("id", "==", Number(resultId))
+            .get();
+
+        if (resultSnapshot.empty) {
+            alert("Result not found!");
+            return;
+        }
+
+        const batch = adminDb.batch();
+
+        resultSnapshot.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+
+        await batch.commit();
+
+        alert("Result deleted successfully!");
+
+        await renderResults();
+
+    } catch (error) {
+
+        console.error("RESULT DELETE ERROR:", error);
+
+        alert("Unable to delete result: " + error.message);
+
+    }
+}
+// RESET RESULT FILTERS
+
+function resetResultFilters() {
+
+    const searchInput = document.getElementById("resultSearch");
+    const examFilter = document.getElementById("resultExamFilter");
+
+    if (searchInput) {
+        searchInput.value = "";
+    }
+
+    if (examFilter) {
+        examFilter.value = "";
+    }
+
+    renderResults();
+}
+// ===================================
+// EXPORT RESULTS TO CSV
+// ===================================
+
+
+async function exportResultsCSV() {
+
+    try {
+
+        const snapshot = await adminDb
+            .collection("results")
+            .get();
+
+        const results = snapshot.docs.map(doc => doc.data());
+
+        if (results.length === 0) {
+            alert("No results available to export.");
+            return;
+        }
+
+        const headers = [
+            "Student ID",
+            "Student Name",
+            "Student Email",
+            "Exam Name",
+            "Date",
+            "Correct Answers",
+            "Wrong Answers",
+            "Attempted",
+            "MCQ Marks",
+            "Written Marks",
+            "Final Marks",
+            "Total Marks"
+        ];
+
+        const rows = results.map(result => {
+
+            const writtenMarks = Object.values(
+                result.writtenEvaluations || {}
+            ).reduce((sum, value) => sum + Number(value || 0), 0);
+
+            const finalMarks =
+                Number(result.obtainedMarks || 0) + writtenMarks;
+
+            return [
+                result.studentId,
+                result.studentName,
+                result.studentEmail,
+                result.examName,
+                result.date,
+                result.correct,
+                result.wrong,
+                result.attempted,
+                result.obtainedMarks,
+                writtenMarks,
+                finalMarks,
+                result.totalMarks
+            ];
+        });
+
+        const csvContent = [
+            headers,
+            ...rows
+        ].map(row =>
+            row.map(value =>
+                `"${String(value ?? "").replace(/"/g, '""')}"`
+            ).join(",")
+        ).join("\r\n");
+
+        const blob = new Blob(
+            ["\uFEFF" + csvContent],
+            { type: "text/csv;charset=utf-8;" }
+        );
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = "RIKON_Exam_Results.csv";
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        URL.revokeObjectURL(url);
+
+        alert("Results exported successfully!");
+
+    } catch (error) {
+
+        console.error("CSV EXPORT ERROR:", error);
+
+        alert("Unable to export results: " + error.message);
+
+    }
+}
+
+// ===================================
+// EXPORT RESULTS TO CSV
+// ===================================
+
+
+// ===================================
+// DOWNLOAD DATA BACKUP
+// ===================================
+
+
+async function backupAllData() {
+
+    try {
+
+        alert("Firebase backup is starting...");
+
+        const collections = [
+            "exams",
+            "questions",
+            "results",
+            "students",
+            "notices",
+            "payments",
+            "paymentSettings"
+        ];
+
+        const backupData = {};
+
+        // LOAD ALL FIREBASE COLLECTIONS
+        for (const collectionName of collections) {
+
+            const snapshot = await adminDb
+                .collection(collectionName)
+                .get();
+
+            backupData[collectionName] = snapshot.docs.map(doc => ({
+                firestoreId: doc.id,
+                ...doc.data()
+            }));
+
+        }
+
+        const backup = {
+            appName: "RIKON'S EXAM CENTER",
+            backupDate: new Date().toISOString(),
+            backupSource: "Firebase",
+            data: backupData
+        };
+
+        const blob = new Blob(
+            [JSON.stringify(backup, null, 2)],
+            { type: "application/json" }
+        );
+
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = "RIKON_EXAM_CENTER_FIREBASE_BACKUP.json";
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        URL.revokeObjectURL(url);
+
+        alert("Firebase backup downloaded successfully!");
+
+    } catch (error) {
+
+        console.error("FIREBASE BACKUP ERROR:", error);
+
+        alert("Backup failed: " + error.message);
+
+    }
+}
+
+// ===================================
+// RESTORE DATA BACKUP
+// ===================================
+
+
+
+async function restoreAllData(event) {
+
+    const file = event.target.files[0];
+
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = async function(e) {
+
+        try {
+
+            const backup = JSON.parse(e.target.result);
+
+            const allowedCollections = [
+                "exams",
+                "questions",
+                "results",
+                "students",
+                "notices",
+                "payments",
+                "paymentSettings"
+            ];
+
+            // VALIDATE BACKUP HEADER
+            if (
+                backup.appName !== "RIKON'S EXAM CENTER" ||
+                backup.backupSource !== "Firebase" ||
+                !backup.data ||
+                typeof backup.data !== "object" ||
+                Array.isArray(backup.data)
+            ) {
+                throw new Error("Invalid Firebase backup file!");
+            }
+
+            // VALIDATE ALL COLLECTIONS
+            for (const name of allowedCollections) {
+
+                if (!Array.isArray(backup.data[name])) {
+                    throw new Error(
+                        "Missing or invalid collection: " + name
+                    );
+                }
+
+                const ids = new Set();
+
+                for (const item of backup.data[name]) {
+
+                    if (
+                        !item ||
+                        typeof item !== "object" ||
+                        Array.isArray(item) ||
+                        typeof item.firestoreId !== "string" ||
+                        !item.firestoreId.trim() ||
+                        item.firestoreId.includes("/")
+                    ) {
+                        throw new Error(
+                            "Invalid document found in: " + name
+                        );
+                    }
+
+                    if (ids.has(item.firestoreId)) {
+                        throw new Error(
+                            "Duplicate document ID in: " + name
+                        );
+                    }
+
+                    ids.add(item.firestoreId);
+                }
+            }
+
+            // CONFIRM RESTORE
+            const confirmed = confirm(
+                "WARNING!\n\nRestore all seven Firebase collections?\n\nExisting data will be replaced.\n\nA safety backup will be downloaded first."
+            );
+
+            if (!confirmed) return;
+
+            // DOWNLOAD SAFETY BACKUP
+            const currentData = {};
+
+            for (const name of allowedCollections) {
+
+                const snapshot = await adminDb
+                    .collection(name)
+                    .get();
+
+                currentData[name] = snapshot.docs.map(doc => ({
+                    ...doc.data(),
+                    firestoreId: doc.id
+                }));
+            }
+
+            const safetyBackup = {
+                appName: "RIKON'S EXAM CENTER",
+                backupDate: new Date().toISOString(),
+                backupSource: "Firebase",
+                data: currentData
+            };
+
+            const blob = new Blob(
+                [JSON.stringify(safetyBackup, null, 2)],
+                { type: "application/json" }
+            );
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+
+            link.href = url;
+            link.download = "RIKON_BEFORE_RESTORE_BACKUP.json";
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            URL.revokeObjectURL(url);
+
+            // RESTORE COLLECTIONS
+            for (const name of allowedCollections) {
+
+                const collection = adminDb.collection(name);
+
+                const existing = await collection.get();
+
+                // DELETE EXISTING DOCUMENTS
+                for (let i = 0; i < existing.docs.length; i += 500) {
+
+                    const batch = adminDb.batch();
+
+                    existing.docs.slice(i, i + 500).forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
+
+                    await batch.commit();
+                }
+
+                // UPLOAD BACKUP DOCUMENTS
+                const documents = backup.data[name];
+
+                for (let i = 0; i < documents.length; i += 500) {
+
+                    const batch = adminDb.batch();
+
+                    documents.slice(i, i + 500).forEach(item => {
+
+                        const data = { ...item };
+
+                        delete data.firestoreId;
+
+                        batch.set(
+                            collection.doc(item.firestoreId),
+                            data
+                        );
+
+                    });
+
+                    await batch.commit();
+                }
+            }
+
+            alert(
+                "Firebase backup restored successfully! The page will reload."
+            );
+
+            location.reload();
+
+        } catch (error) {
+
+            console.error("FIREBASE RESTORE ERROR:", error);
+
+            alert(
+                "Restore failed: " + error.message +
+                "\n\nYour safety backup should be available if restoration was interrupted."
+            );
+
+        }
+
+    };
+
+    reader.onerror = function() {
+        alert("Unable to read backup file.");
+    };
+
+    reader.readAsText(file);
+
+    event.target.value = "";
+}
+
+
+// ===================================
+// STUDENT PERFORMANCE ANALYTICS
+// ===================================
+
+function renderAnalytics() {
+
+    function getData(key) {
+        try {
+            const data = JSON.parse(
+                localStorage.getItem(key) || "[]"
+            );
+            return Array.isArray(data) ? data : [];
+        } catch (error) {
+            return [];
+        }
+    }
+
+    const students = getData("rikon_students");
+    const results = getData("rikon_results");
+
+    const totalStudents = students.length;
+    const totalResults = results.length;
+
+    const performances = results.map(result => {
+
+        const writtenMarks = Object.values(
+            result.writtenEvaluations || {}
+        ).reduce((sum, value) => {
+            return sum + (Number(value) || 0);
+        }, 0);
+
+        const obtainedMarks =
+            Number(result.obtainedMarks || 0) + writtenMarks;
+
+        const totalMarks = Number(result.totalMarks || 0);
+
+        if (totalMarks <= 0) return null;
+
+        return {
+            name: result.studentName || "Unknown Student",
+            id: result.studentId || "N/A",
+            percentage: (obtainedMarks / totalMarks) * 100
+        };
+
+    }).filter(item => item !== null);
+
+    const average = performances.length
+        ? performances.reduce((sum, item) => {
+            return sum + item.percentage;
+        }, 0) / performances.length
+        : 0;
+
+    const highest = performances.length
+        ? Math.max(...performances.map(item => item.percentage))
+        : 0;
+
+    document.getElementById("analyticsStudents").textContent =
+        totalStudents;
+
+    document.getElementById("analyticsResults").textContent =
+        totalResults;
+
+    document.getElementById("analyticsAverage").textContent =
+        average.toFixed(1) + "%";
+
+    document.getElementById("analyticsHighest").textContent =
+        highest.toFixed(1) + "%";
+
+    // TOP 10 STUDENTS
+
+    const studentPerformance = {};
+
+    performances.forEach(item => {
+
+        const key = String(item.id);
+
+        if (!studentPerformance[key]) {
+            studentPerformance[key] = {
+                name: item.name,
+                id: item.id,
+                total: 0,
+                exams: 0
+            };
+        }
+
+        studentPerformance[key].total += item.percentage;
+        studentPerformance[key].exams++;
+
+    });
+
+    const topStudents = Object.values(studentPerformance)
+        .map(student => ({
+            ...student,
+            average: student.total / student.exams
+        }))
+        .sort((a, b) => b.average - a.average)
+        .slice(0, 10);
+
+    const topContainer = document.getElementById(
+        "analyticsTopStudents"
+    );
+
+    if (!topContainer) return;
+
+    if (topStudents.length === 0) {
+        topContainer.innerHTML =
+            "<p>No performance data available yet.</p>";
+        return;
+    }
+
+    topContainer.innerHTML = topStudents.map((student, index) => {
+
+        return `
+            <div style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                gap:10px;
+                flex-wrap:wrap;
+                padding:14px;
+                margin-top:10px;
+                background:#f1f5f9;
+                border-radius:8px;
+            ">
+
+                <div>
+                    <strong>#${index + 1} ${
+                        escapeHTML(student.name)
+                    }</strong>
+
+                    <p style="margin:5px 0 0;">
+                        Student ID: ${escapeHTML(student.id)}
+                    </p>
+
+                    <p style="margin:5px 0 0;">
+                        Exams Completed: ${student.exams}
+                    </p>
+                </div>
+
+                <strong style="color:#2563eb;">
+                    ${student.average.toFixed(1)}%
+                </strong>
+
+            </div>
+        `;
+
+    }).join("");
+// STUDENT PERFORMANCE CHART
+
+const chartContainer = document.getElementById("analyticsChart");
+
+if (chartContainer) {
+
+    if (topStudents.length === 0) {
+
+        chartContainer.innerHTML = "No chart data available.";
+
+    } else {
+
+        chartContainer.innerHTML = topStudents.map(student => {
+
+            const percentage = Math.max(
+                0,
+                Math.min(100, student.average)
+            );
+
+            return `
+                <div style="margin-bottom:16px;">
+
+                    <div style="
+                        display:flex;
+                        justify-content:space-between;
+                        gap:10px;
+                        margin-bottom:6px;
+                    ">
+                        <strong>${escapeHTML(student.name)}</strong>
+                        <strong>${student.average.toFixed(1)}%</strong>
+                    </div>
+
+                    <div style="
+                        width:100%;
+                        height:14px;
+                        background:#e2e8f0;
+                        border-radius:20px;
+                        overflow:hidden;
+                    ">
+
+                        <div style="
+                            width:${percentage}%;
+                            height:100%;
+                            background:linear-gradient(90deg,#2563eb,#06b6d4);
+                            border-radius:20px;
+                        "></div>
+
+                    </div>
+
+                </div>
+            `;
+
+        }).join("");
+
+    }
+}
+// SUBJECT-WISE PERFORMANCE ANALYTICS
+
+const exams = getData("rikon_exams");
+const subjectResults = {};
+
+results.forEach(result => {
+
+    const exam = exams.find(item =>
+        String(item.name) === String(result.examName)
+    );
+
+    if (!exam || !exam.category) return;
+
+    const subject = exam.category;
+
+    const writtenMarks = Object.values(
+        result.writtenEvaluations || {}
+    ).reduce((sum, value) => sum + (Number(value) || 0), 0);
+
+    const obtainedMarks =
+        Number(result.obtainedMarks || 0) + writtenMarks;
+
+    const totalMarks = Number(result.totalMarks || 0);
+
+    if (totalMarks <= 0) return;
+
+    const percentage = (obtainedMarks / totalMarks) * 100;
+
+    if (!subjectResults[subject]) {
+        subjectResults[subject] = {
+            totalPercentage: 0,
+            count: 0
+        };
+    }
+
+    subjectResults[subject].totalPercentage += percentage;
+    subjectResults[subject].count++;
+
+});
+
+const subjectContainer = document.getElementById(
+    "subjectAnalytics"
+);
+
+if (subjectContainer) {
+
+    const subjects = Object.entries(subjectResults).map(
+        ([name, data]) => ({
+            name: name,
+            average: data.totalPercentage / data.count,
+            exams: data.count
+        })
+    ).sort((a, b) => b.average - a.average);
+
+    if (subjects.length === 0) {
+
+        subjectContainer.innerHTML =
+            "<p>No subject performance data available yet.</p>";
+
+    } else {
+
+        subjectContainer.innerHTML = subjects.map(subject => {
+
+            const percentage = Math.max(
+                0,
+                Math.min(100, subject.average)
+            );
+
+            return `
+                <div style="
+                    padding:14px;
+                    margin-bottom:12px;
+                    background:#f1f5f9;
+                    border-radius:8px;
+                ">
+
+                    <div style="
+                        display:flex;
+                        justify-content:space-between;
+                        gap:10px;
+                        margin-bottom:8px;
+                    ">
+
+                        <strong>${escapeHTML(subject.name)}</strong>
+
+                        <strong style="color:#2563eb;">
+                            ${subject.average.toFixed(1)}%
+                        </strong>
+
+                    </div>
+
+                    <div style="
+                        width:100%;
+                        height:12px;
+                        background:#cbd5e1;
+                        border-radius:20px;
+                        overflow:hidden;
+                    ">
+
+                        <div style="
+                            width:${percentage}%;
+                            height:100%;
+                            background:linear-gradient(90deg,#2563eb,#06b6d4);
+                        "></div>
+
+                    </div>
+
+                    <p style="margin:7px 0 0;font-size:13px;">
+                        Total Results: ${subject.exams}
+                    </p>
+
+                </div>
+            `;
+
+        }).join("");
+
+    }
+}
+}
+// ===================================
+// ADMIN PAYMENT MANAGEMENT
+// ===================================
+// ===================================
+// PAYMENT SETTINGS SAVE & LOAD
+// ===================================
+
+async function savePaymentSettings() {
+
+    const bkash = document.getElementById("adminBkashNumber").value.trim();
+    const nagad = document.getElementById("adminNagadNumber").value.trim();
+    const rocket = document.getElementById("adminRocketNumber").value.trim();
+
+    if (!bkash && !nagad && !rocket) {
+        alert("Please enter at least one payment number.");
+        return;
+    }
+
+    const settings = {
+        bkash: bkash,
+        nagad: nagad,
+        rocket: rocket
+    };
+
+    try {
+
+        await adminDb.collection("paymentSettings")
+            .doc("default")
+            .set(settings);
+
+        alert("Payment settings saved successfully!");
+
+    } catch (error) {
+
+        console.error("PAYMENT SETTINGS SAVE ERROR:", error);
+
+        alert("Unable to save payment settings: " + error.message);
+
+    }
+}
+
+
+async function loadPaymentSettings() {
+
+    try {
+
+        const settingsDoc = await adminDb
+            .collection("paymentSettings")
+            .doc("default")
+            .get();
+
+        const settings = settingsDoc.exists
+            ? settingsDoc.data()
+            : {};
+
+        document.getElementById("adminBkashNumber").value =
+            settings.bkash || "";
+
+        document.getElementById("adminNagadNumber").value =
+            settings.nagad || "";
+
+        document.getElementById("adminRocketNumber").value =
+            settings.rocket || "";
+
+    } catch (error) {
+
+        console.error("PAYMENT SETTINGS LOAD ERROR:", error);
+
+        alert("Unable to load payment settings: " + error.message);
+
+    }
+}
+
+
+async function renderPayments() {
+
+    const container = document.getElementById("paymentList");
+
+    if (!container) return;
+
+    container.innerHTML = "<p>Loading payments...</p>";
+
+    try {
+
+        // LOAD PAYMENTS FROM FIREBASE
+        const snapshot = await adminDb.collection("payments").get();
+
+        const payments = snapshot.docs
+            .map(doc => ({
+                ...doc.data(),
+                firestoreId: doc.id
+            }))
+            .sort((a, b) => Number(b.id || 0) - Number(a.id || 0));
+
+        // PAYMENT STATISTICS
+        const total = payments.length;
+
+        const pending = payments.filter(
+            payment => payment.status === "pending"
+        ).length;
+
+        const approved = payments.filter(
+            payment => payment.status === "approved"
+        ).length;
+
+        const rejected = payments.filter(
+            payment => payment.status === "rejected"
+        ).length;
+
+        const revenue = payments
+            .filter(payment => payment.status === "approved")
+            .reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
+
+        document.getElementById("totalPayments").textContent = total;
+
+        document.getElementById("pendingPayments").textContent = pending;
+
+        document.getElementById("approvedPayments").textContent = approved;
+
+        document.getElementById("rejectedPayments").textContent = rejected;
+
+        document.getElementById("totalRevenue").textContent =
+            "৳" + revenue.toLocaleString("en-BD");
+
+        if (payments.length === 0) {
+
+            container.innerHTML = "<p>No payment submissions available.</p>";
+
+            return;
+        }
+
+        container.innerHTML = payments.map(payment => `
+
+            <div class="question-item" style="margin-top:15px;">
+
+                <h3>${escapeHTML(payment.studentName || "Unknown Student")}</h3>
+
+                <p><strong>Student ID:</strong> ${escapeHTML(payment.studentId || "")}</p>
+
+                <p><strong>Exam:</strong> ${escapeHTML(payment.examName || "")}</p>
+
+                <p><strong>Amount:</strong> ৳${Number(payment.amount || 0)}</p>
+
+                <p><strong>Method:</strong> ${escapeHTML(payment.method || "")}</p>
+
+                <p><strong>Sender Number:</strong> ${escapeHTML(payment.senderNumber || "")}</p>
+
+                <p><strong>Transaction ID:</strong> ${escapeHTML(payment.transactionId || "")}</p>
+
+                <p><strong>Date:</strong> ${escapeHTML(payment.date || "")}</p>
+
+                <p><strong>Status:</strong> ${escapeHTML(payment.status || "pending")}</p>
+
+                ${payment.status === "pending" ? `
+
+                    <button type="button"
+                        onclick="updatePaymentStatus('${payment.firestoreId}', 'approved')"
+                        style="background:#16a34a;">
+                        Approve
+                    </button>
+
+                    <button type="button"
+                        onclick="updatePaymentStatus('${payment.firestoreId}', 'rejected')"
+                        style="background:#dc2626;">
+                        Reject
+                    </button>
+
+                ` : ""}
+
+            </div>
+
+        `).join("");
+
+    } catch (error) {
+
+        console.error("FIREBASE PAYMENT LOADING ERROR:", error);
+
+        container.innerHTML = `
+            <p>Unable to load payments: ${escapeHTML(error.message)}</p>
+        `;
+
+    }
+}
+
+// ===================================
+// UPDATE PAYMENT STATUS
+// ===================================
+
+
+async function updatePaymentStatus(paymentId, newStatus) {
+
+    if (newStatus !== "approved" && newStatus !== "rejected") {
+        return;
+    }
+
+    const confirmation = confirm(
+        newStatus === "approved"
+            ? "Are you sure you want to approve this payment?"
+            : "Are you sure you want to reject this payment?"
+    );
+
+    if (!confirmation) return;
+
+    try {
+
+        // FIND PAYMENT IN FIREBASE
+        const paymentRef = adminDb
+            .collection("payments")
+            .doc(String(paymentId));
+
+        const paymentDoc = await paymentRef.get();
+
+        if (!paymentDoc.exists) {
+            alert("Payment record not found in Firebase.");
+            return;
+        }
+
+        const payment = paymentDoc.data();
+
+        if (payment.status !== "pending") {
+            alert("This payment has already been processed.");
+            await renderPayments();
+            return;
+        }
+
+        // UPDATE PAYMENT STATUS
+        await paymentRef.update({
+            status: newStatus,
+            reviewedAt: Date.now()
+        });
+
+        alert(
+            newStatus === "approved"
+                ? "Payment approved successfully!"
+                : "Payment rejected successfully!"
+        );
+
+        // REFRESH PAYMENT MANAGEMENT
+        await renderPayments();
+
+    } catch (error) {
+
+        console.error("PAYMENT STATUS UPDATE ERROR:", error);
+
+        alert("Unable to update payment: " + error.message);
+
+    }
+}
+
+async function renderStudentList() {
+    const container = document.getElementById("studentList");
+    const count = document.getElementById("studentCount");
+    const searchInput = document.getElementById("studentSearch");
+
+    if (!container || !count) return;
+
+    let students = [];
+
+try {
+    const studentSnapshot = await adminDb.collection("students").get();
+
+    students = studentSnapshot.docs.map(doc => ({
+        ...doc.data(),
+        firestoreId: doc.id
+    }));
+
+} catch (error) {
+    console.error("Firebase Student Loading Error:", error);
+    alert("Student Data Load Failed: " + error.message);
+    return;
+}
+    count.textContent = students.length;
+
+    if (searchInput) {
+        searchInput.oninput = renderStudentList;
+    }
+
+    const searchText = searchInput
+        ? searchInput.value.trim().toLowerCase()
+        : "";
+
+    const filteredStudents = students.filter(student =>
+        String(student.name || "").toLowerCase().includes(searchText) ||
+        String(student.email || "").toLowerCase().includes(searchText) ||
+        String(student.phone || "").toLowerCase().includes(searchText)
+    );
+
+    if (filteredStudents.length === 0) {
+        container.innerHTML = students.length === 0
+            ? "<p>No students registered yet.</p>"
+            : "<p>No matching students found.</p>";
+        return;
+    }
+
+    container.innerHTML = filteredStudents.map(student => {
+        const blocked = student.status === "blocked";
+        const restricted = Number(student.restrictedUntil) > Date.now();
+
+        return `
+            <div class="question-item" style="margin-top:15px;">
+                <h3>${escapeHTML(student.name || "Unknown Student")}</h3>
+
+                <p><strong>Student ID:</strong> ${escapeHTML(student.id)}</p>
+                <p><strong>Email:</strong> ${escapeHTML(student.email || "N/A")}</p>
+                <p><strong>Mobile:</strong> ${escapeHTML(student.phone || "N/A")}</p>
+
+                <p><strong>Status:</strong>
+                    ${blocked ? "Blocked" : restricted ? "Temporarily Restricted" : "Active"}
+                </p>
+
+                ${restricted ? `
+                    <p><strong>Restriction Reason:</strong>
+                    ${escapeHTML(student.restrictionReason || "Not specified")}</p>
+                ` : ""}
+
+                <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:15px;">
+
+                    <button type="button"
+                        data-action="${blocked ? "unblock" : "block"}"
+                        data-id="${escapeHTML(student.id)}"
+                        style="background:${blocked ? "#16a34a" : "#dc2626"};">
+                        ${blocked ? "Unblock Student" : "Block Student"}
+                    </button>
+
+                    <button type="button"
+                        data-action="${restricted ? "unrestrict" : "restrict"}"
+                        data-id="${escapeHTML(student.id)}"
+                        style="background:#d97706;">
+                        ${restricted ? "Remove Restriction" : "Temporary Restrict"}
+                    </button>
+
+                    <button type="button"
+                        data-action="reset"
+                        data-id="${escapeHTML(student.id)}"
+                        style="background:#2563eb;">
+                        Reset Password
+                    </button>
+
+                    <button type="button"
+                        data-action="delete"
+                        data-id="${escapeHTML(student.id)}"
+                        style="background:#991b1b;">
+                        Delete Student
+                    </button>
+
+                </div>
+            </div>
+        `;
+    }).join("");
+
+    // STUDENT MANAGEMENT ACTIONS
+    container.onclick = async function(event) {
+        const button = event.target.closest("button[data-action]");
+        if (!button) return;
+
+        const action = button.dataset.action;
+        const studentId = button.dataset.id;
+
+                try {
+            const studentSnapshot = await adminDb.collection("students")
+                .get();
+
+            const studentDoc = studentSnapshot.docs.find(doc =>
+                String(doc.data().id) === String(studentId)
+            );
+
+            if (!studentDoc) {
+                alert("Student not found in Firebase.");
+                return;
+            }
+
+            const student = studentDoc.data();
+
+            if (action === "block") {
+                if (!confirm("Are you sure you want to block this student?")) return;
+                student.status = "blocked";
+            }
+
+            else if (action === "unblock") {
+                student.status = "active";
+            }
+
+            else if (action === "restrict") {
+                const hours = Number(prompt("Restriction duration in hours:"));
+
+                if (!Number.isFinite(hours) || hours <= 0) {
+                    alert("Please enter a valid duration.");
+                    return;
+                }
+
+                const reason = prompt("Enter restriction reason:");
+
+                if (!reason || !reason.trim()) {
+                    alert("Restriction reason is required.");
+                    return;
+                }
+
+                student.restrictedUntil = Date.now() + hours * 60 * 60 * 1000;
+                student.restrictionReason = reason.trim();
+            }
+
+            else if (action === "unrestrict") {
+                if (!confirm("Remove this student's restriction?")) return;
+
+                student.restrictedUntil = 0;
+                student.restrictionReason = "";
+            }
+
+            else if (action === "reset") {
+                alert("Password Reset will be connected securely in a later step.");
+                return;
+            }
+
+            else if (action === "delete") {
+                if (!confirm("Permanently delete this student? This action cannot be undone.")) return;
+
+                await studentDoc.ref.delete();
+
+                await renderStudentList();
+
+                alert("Student deleted successfully!");
+                return;
+            }
+
+            await studentDoc.ref.update({
+                status: student.status || "active",
+                restrictedUntil: student.restrictedUntil || 0,
+                restrictionReason: student.restrictionReason || ""
+            });
+
+            await renderStudentList();
+
+            const totalStudents = document.getElementById("totalStudents");
+            if (totalStudents) {
+                totalStudents.textContent = studentSnapshot.size;
+            }
+
+            alert("Student information updated successfully!");
+
+               } catch (error) {
+            console.error("Student Action Failed:", error);
+            alert("Student Action Failed: " + error.message);
+        }
+    };
+
+}
+    
+    
+
+
+
+async function updateDashboard() {
+
+    document.getElementById("totalExams").textContent =
+        examList.length;
+
+    document.getElementById("totalQuestions").textContent =
+        questionList.length;
+
+    // LOAD TOTAL STUDENTS FROM FIREBASE
+    try {
+
+        const studentSnapshot = await adminDb
+            .collection("students")
+            .get();
+
+        document.getElementById("totalStudents").textContent =
+            studentSnapshot.size;
+
+    } catch (error) {
+
+        console.error("DASHBOARD STUDENT COUNT ERROR:", error);
+
+        document.getElementById("totalStudents").textContent = "Error";
+    }
+
+    const recent = document.getElementById("recentExams");
+    const schedule = document.getElementById("scheduleList");
+
+    if (examList.length === 0) {
+
+        recent.textContent = "No examinations created yet.";
+        schedule.textContent = "No scheduled exams.";
+
+        return;
+    }
+
+    recent.innerHTML = examList.map(exam => `
+        <p>${escapeHTML(exam.name)} — ${escapeHTML(exam.marks)} Marks</p><br>
+    `).join("");
+
+    schedule.innerHTML = examList.map((exam, index) => {
+
+        const startDate = new Date(exam.date);
+        const validDate = !isNaN(startDate.getTime());
+
+        const endDate = validDate
+            ? new Date(startDate.getTime() + Number(exam.duration) * 60000)
+            : null;
+
+        const now = new Date();
+
+        let status = "Date Not Set";
+
+        if (validDate) {
+            if (now < startDate) status = "Upcoming";
+            else if (now < endDate) status = "Ongoing";
+            else status = "Completed";
+        }
+
+        return `
+            <div class="question-item">
+                <h3>${escapeHTML(exam.name)}</h3>
+                <p>Category: ${escapeHTML(exam.category)}</p>
+                <p>Exam Date: ${validDate ? escapeHTML(startDate.toLocaleDateString()) : "Not Set"}</p>
+                <p>Starting Time: ${validDate ? escapeHTML(startDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })) : "Not Set"}</p>
+                <p>Ending Time: ${endDate ? escapeHTML(endDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })) : "Not Set"}</p>
+                <p>Duration: ${escapeHTML(exam.duration)} Minutes</p>
+                <p>Total Marks: ${escapeHTML(exam.marks)}</p>
+                <p>Negative Marking: ${escapeHTML(exam.negative)}</p>
+                <p><strong>Status: ${status}</strong></p>
+                <button type="button" class="edit-exam-btn" data-edit-exam="${index}">Edit Exam</button>
+                <button type="button" class="delete-exam-btn" data-delete-exam="${index}">Delete Exam</button>
+            </div><br>
+        `;
+
+    }).join("");
+}
+
+let editingExamIndex = null;
+
+document.getElementById("scheduleList").addEventListener("click", async event => {
+    const editBtn = event.target.closest(".edit-exam-btn");
+    const deleteBtn = event.target.closest(".delete-exam-btn");
+
+    if (editBtn) {
+        const index = Number(editBtn.dataset.editExam);
+        const exam = examList[index];
+        if (!exam) return;
+        editingExamIndex = index;
+        document.getElementById("examName").value = exam.name;
+        document.getElementById("examCategory").value = exam.category;
+        document.getElementById("examPaymentType").value =
+    exam.paymentType || "free";
+
+document.getElementById("examFee").value =
+    Number(exam.fee || 0);
+        document.getElementById("examDate").value = exam.date;
+        document.getElementById("examDuration").value = exam.duration;
+        document.getElementById("examMarks").value = exam.marks;
+        document.getElementById("negativeMark").value = exam.negative;
+        showPage("exams");
+        document.querySelector("#examForm button[type='submit']").textContent = "Update Examination";
+    }
+
+ if (deleteBtn) {
+    const index = Number(deleteBtn.dataset.deleteExam);
+    const exam = examList[index];
+
+    if (!exam) return;
+
+    if (!confirm("Are you sure you want to delete this exam? Its questions will also be deleted.")) return;
+
+    try {
+        const batch = adminDb.batch();
+
+        // Delete Exam from Firebase
+        batch.delete(
+            adminDb.collection("exams").doc(exam.firestoreId)
+        );
+
+        // Find related questions
+        const relatedQuestions = questionList.filter(
+            q => Number(q.examIndex) === index
+        );
+
+        // Delete related questions from Firebase
+        relatedQuestions.forEach(question => {
+            batch.delete(
+                adminDb.collection("questions").doc(question.firestoreId)
+            );
+        });
+
+        await batch.commit();
+
+        // Reload Firebase data
+        await loadFirebaseExamData();
+
+        // Re-adjust question exam indexes
+        const updatedQuestions = questionList.map(q => ({
+            ...q,
+            examIndex: Number(q.examIndex) > index
+                ? Number(q.examIndex) - 1
+                : Number(q.examIndex)
+        }));
+
+        // Save adjusted questions
+        const updateBatch = adminDb.batch();
+
+        updatedQuestions.forEach(question => {
+            updateBatch.update(
+                adminDb.collection("questions").doc(question.firestoreId),
+                { examIndex: question.examIndex }
+            );
+        });
+
+        if (updatedQuestions.length > 0) {
+            await updateBatch.commit();
+        }
+
+        await loadFirebaseExamData();
+
+        updateDashboard();
+        updateExamDropdown();
+        updateMeritExamDropdown();
+        renderQuestionSummary();
+
+        alert("Exam deleted successfully!");
+
+    } catch (error) {
+        console.error("Exam Delete Failed:", error);
+        alert("Exam Delete Failed: " + error.message);
+    }
+}
+});
+
+document.getElementById("examForm").addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const paymentType = document.getElementById("examPaymentType").value;
+    const examFee = Number(document.getElementById("examFee").value);
+
+    if (
+        paymentType === "paid" &&
+        (!Number.isFinite(examFee) || examFee <= 0)
+    ) {
+        alert("Paid Exam-এর জন্য সঠিক Fee লিখুন।");
+        return;
+    }
+
+    const exam = {
+        name: document.getElementById("examName").value.trim(),
+        category: document.getElementById("examCategory").value,
+        date: document.getElementById("examDate").value,
+        duration: Number(document.getElementById("examDuration").value),
+        marks: Number(document.getElementById("examMarks").value),
+        negative: Number(document.getElementById("negativeMark").value),
+        paymentType: paymentType,
+        fee: examFee,
+        createdAt: editingExamIndex !== null
+            ? (examList[editingExamIndex].createdAt || null)
+            : Date.now()
+    };
+
+    if (!exam.name) {
+        alert("Please enter an exam name.");
+        return;
+    }
+
+    if (examList.some((item, index) =>
+        index !== editingExamIndex &&
+        item.name.toLowerCase() === exam.name.toLowerCase()
+    )) {
+        alert("An exam with this name already exists.");
+        return;
+    }
+
+    const isEditing = editingExamIndex !== null;
+
+try {
+    if (isEditing) {
+        const existingExam = examList[editingExamIndex];
+
+        await adminDb.collection("exams")
+            .doc(existingExam.firestoreId)
+            .update(exam);
+
+    } else {
+        const docRef = await adminDb.collection("exams").add(exam);
+        exam.firestoreId = docRef.id;
+    }
+
+    await loadFirebaseExamData();
+
+    editingExamIndex = null;
+
+    updateExamDropdown();
+    updateMeritExamDropdown();
+    updateDashboard();
+    renderQuestionSummary();
+
+    event.target.reset();
+
+    document.getElementById("examFee").value = 0;
+
+    document.querySelector("#examForm button[type='submit']").textContent =
+        "Add Examination";
+
+    alert(isEditing
+        ? "Examination updated successfully!"
+        : "Examination added successfully!"
+    );
+
+} catch (error) {
+    console.error("Exam Save Failed:", error);
+    alert("Exam Save Failed: " + error.message);
+}
+   });
+
+function renderQuestionSummary() {
+    const summary = document.getElementById("questionSummary");
+    if (questionList.length === 0) {
+        summary.textContent = "No questions added yet.";
+        return;
+    }
+
+    summary.innerHTML = questionList.map((item, index) => {
+        const examName = examList[item.examIndex]?.name || "Unknown Exam";
+        const answerDetails = item.type === "mcq" ? `<p>Correct Answer: ${escapeHTML(item.correct)}</p>` : `<p>Instructions: ${escapeHTML(item.instructions || "No extra instructions")}</p>`;
+
+        return `
+            <div class="question-item">
+                <strong>Question ${index + 1}</strong>
+                <span class="question-badge" style="background:${item.type === "mcq" ? "#dbeafe" : "#dcfce7"}; color:${item.type === "mcq" ? "#1d4ed8" : "#15803d"};">
+                    ${escapeHTML(item.type.toUpperCase())}
+                </span>
+                <p style="margin:10px 0;">${escapeHTML(item.text)}</p>
+                <small>Exam: ${escapeHTML(examName)}</small>
+                <p>Marks: ${escapeHTML(item.marks)}</p>
+                ${item.type === "mcq" ? `<p>A. ${escapeHTML(item.A)}</p><p>B. ${escapeHTML(item.B)}</p><p>C. ${escapeHTML(item.C)}</p><p>D. ${escapeHTML(item.D)}</p>` : ""}
+                ${answerDetails}
+                <button type="button" class="edit-question-btn" data-edit-id="${escapeHTML(item.id)}">Edit Question</button>
+                <button type="button" class="delete-question-btn" data-delete-id="${escapeHTML(item.id)}">Delete Question</button>
+            </div>
+        `;
+    }).join("");
+}
+
+document.getElementById("questionSummary").addEventListener("click", async event => {
+    const editBtn = event.target.closest(".edit-question-btn");
+    const deleteBtn = event.target.closest(".delete-question-btn");
+
+    if (editBtn) {
+        const questionId = editBtn.dataset.editId;
+        const question = questionList.find(item => String(item.id) === questionId);
+        if (!question) return;
+        editingQuestionId = question.id;
+        document.getElementById("questionExam").value = String(question.examIndex);
+        questionType.value = question.type;
+        toggleQuestionType();
+        document.getElementById("questionText").value = question.text;
+        document.getElementById("questionMarks").value = question.marks;
+        if (question.type === "mcq") {
+            document.getElementById("optionA").value = question.A;
+            document.getElementById("optionB").value = question.B;
+            document.getElementById("optionC").value = question.C;
+            document.getElementById("optionD").value = question.D;
+            document.getElementById("correctAnswer").value = question.correct;
+        } else {
+            document.getElementById("answerInstructions").value = question.instructions || "";
+        }
+        document.getElementById("questionSubmitBtn").textContent = "Update Question";
+        document.getElementById("cancelEditBtn").style.display = "inline-block";
+        showPage("questions");
+    }
+
+    if (deleteBtn) {
+    const questionId = deleteBtn.dataset.deleteId;
+
+    if (!confirm("Are you sure you want to delete this question?")) return;
+
+    const question = questionList.find(
+        item => String(item.id) === String(questionId)
+    );
+
+    if (!question) return;
+
+    try {
+        await adminDb.collection("questions")
+            .doc(question.firestoreId)
+            .delete();
+
+        await loadFirebaseExamData();
+
+        renderQuestionSummary();
+        updateDashboard();
+
+        alert("Question deleted successfully!");
+
+    } catch (error) {
+        console.error("Question Delete Failed:", error);
+        alert("Question Delete Failed: " + error.message);
+    }
+}
+});
+
+document.getElementById("cancelEditBtn").addEventListener("click", () => {
+    editingQuestionId = null;
+    document.getElementById("questionForm").reset();
+    document.getElementById("questionSubmitBtn").textContent = "+ Add Question";
+    document.getElementById("cancelEditBtn").style.display = "none";
+    document.getElementById("questionMarks").value = 1;
+    toggleQuestionType();
+});
+
+
+document.getElementById("questionForm").addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const examValue = document.getElementById("questionExam").value;
+    const examIndex = Number(examValue);
+
+    if (examValue === "" || !Number.isInteger(examIndex) || !examList[examIndex]) {
+        alert("Please select a valid examination.");
+        return;
+    }
+
+    const type = questionType.value;
+
+    const question = {
+        id: editingQuestionId !== null ? editingQuestionId : Date.now() + Math.random(),
+        examIndex: examIndex,
+        type: type,
+        text: document.getElementById("questionText").value.trim(),
+        marks: Number(document.getElementById("questionMarks").value)
+    };
+
+    if (!question.text || !Number.isFinite(question.marks) || question.marks <= 0) {
+        alert("Please enter a valid question and marks.");
+        return;
+    }
+
+    if (type === "mcq") {
+        question.A = document.getElementById("optionA").value.trim();
+        question.B = document.getElementById("optionB").value.trim();
+        question.C = document.getElementById("optionC").value.trim();
+        question.D = document.getElementById("optionD").value.trim();
+        question.correct = document.getElementById("correctAnswer").value;
+
+        if (!question.A || !question.B || !question.C || !question.D || !question.correct) {
+            alert("Please complete all MCQ options.");
+            return;
+        }
+    } else {
+        question.instructions = document.getElementById("answerInstructions").value.trim();
+    }
+
+   const isEditing = editingQuestionId !== null;
+
+try {
+    if (isEditing) {
+        const existingQuestion = questionList.find(
+            item => String(item.id) === String(editingQuestionId)
+        );
+
+        if (!existingQuestion) {
+            throw new Error("Question not found.");
+        }
+
+        await adminDb.collection("questions")
+            .doc(existingQuestion.firestoreId)
+            .update(question);
+
+    } else {
+        const docRef = await adminDb.collection("questions").add(question);
+        question.firestoreId = docRef.id;
+    }
+
+    await loadFirebaseExamData();
+
+    editingQuestionId = null;
+
+    renderQuestionSummary();
+    updateDashboard();
+
+    event.target.reset();
+
+    document.getElementById("questionMarks").value = 1;
+    document.getElementById("questionSubmitBtn").textContent = "+ Add Question";
+    document.getElementById("cancelEditBtn").style.display = "none";
+
+    toggleQuestionType();
+
+    alert(isEditing
+        ? "Question updated successfully!"
+        : "Question added successfully!"
+    );
+
+} catch (error) {
+    console.error("Question Save Failed:", error);
+    alert("Question Save Failed: " + error.message);
+}
+});
+
+
+function updateMeritExamDropdown() {
+    const select = document.getElementById("meritExamSelect");
+    if (!select) return;
+    const exams = JSON.parse(localStorage.getItem("rikon_exams") || "[]");
+    select.innerHTML = `<option value="">Select an examination</option>`;
+    exams.forEach((exam, index) => {
+        select.innerHTML += `<option value="${index}">${escapeHTML(exam.name)}</option>`;
+    });
+}
+
+function renderMeritList() {
+    const select = document.getElementById("meritExamSelect");
+    const container = document.getElementById("meritListContainer");
+    if (!select || !container) return;
+    const examIndex = select.value;
+    if (examIndex === "") {
+        container.innerHTML = "<p>Please select an examination.</p>";
+        return;
+    }
+
+    let results = JSON.parse(localStorage.getItem("rikon_results") || "[]");
+    const exams = JSON.parse(localStorage.getItem("rikon_exams") || "[]");
+    const selectedExam = exams[Number(examIndex)];
+    if (!selectedExam) return;
+
+    const meritResults = results.filter(r => String(r.examName || "").trim() === String(selectedExam.name || "").trim()).map(r => ({
+        ...r,
+        finalMarks: Number(r.finalMarks !== undefined ? r.finalMarks : r.obtainedMarks) || 0
+    }));
+
+    if (meritResults.length === 0) {
+        container.innerHTML = `<p>No evaluated results available for this examination.</p>`;
+        return;
+    }
+
+    meritResults.sort((a, b) => b.finalMarks - a.finalMarks);
+
+    container.innerHTML = `
+        <h3>${escapeHTML(selectedExam.name)} - Merit List</h3>
+        <p>Total Ranked Students: ${meritResults.length}</p>
+        <table style="width:100%; border-collapse:collapse; margin-top:15px;">
+            <thead>
+                <tr style="background:#1e293b; color:white;">
+                    <th style="padding:12px;">Rank</th>
+                    <th style="padding:12px;">Student Name</th>
+                    <th style="padding:12px;">Student ID</th>
+                    <th style="padding:12px;">Final Marks</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${meritResults.map((r, i) => `
+                    <tr style="border-bottom:1px solid #ddd; text-align:center;">
+                        <td style="padding:12px;">${i + 1}</td>
+                        <td style="padding:12px;">${escapeHTML(r.studentName)}</td>
+                        <td style="padding:12px;">${escapeHTML(r.studentId)}</td>
+                        <td style="padding:12px;"><strong>${r.finalMarks}</strong></td>
+                    </tr>
+                `).join("")}
+            </tbody>
+        </table>
+    `;
+}
+
+// ===================================
+// ===================================
+// NOTICE BOARD SYSTEM
+// ===================================
+
+let notices = JSON.parse(localStorage.getItem("rikon_notices")) || [];
+
+function saveNotices() {
+    localStorage.setItem("rikon_notices", JSON.stringify(notices));
+}
+
+
+async function renderNotices() {
+
+    const container = document.getElementById("noticeList");
+
+    if (!container) return;
+
+    container.innerHTML = "<p>Loading notices...</p>";
+
+    try {
+
+        const snapshot = await adminDb
+            .collection("notices")
+            .get();
+
+        notices = snapshot.docs.map(doc => ({
+            ...doc.data(),
+            firestoreId: doc.id
+        }));
+
+        notices.sort((a, b) =>
+            Number(b.createdAt || 0) - Number(a.createdAt || 0)
+        );
+
+        if (notices.length === 0) {
+            container.innerHTML =
+                "<p>No notices published yet.</p>";
+            return;
+        }
+
+        container.innerHTML = notices.map(notice => `
+            <div class="content-card" style="margin-top:15px;">
+
+                <h3>${escapeHTML(notice.title || "")}</h3>
+
+                <p>${escapeHTML(notice.description || "")}</p>
+
+                <p>
+                    <strong>Priority:</strong>
+                    ${escapeHTML(notice.priority || "Normal")}
+                </p>
+
+                <p><small>${escapeHTML(notice.date || "")}</small></p>
+
+                <button class="primary-btn"
+                    style="background:#dc2626;"
+                    onclick="deleteNotice('${notice.firestoreId}')">
+                    Delete Notice
+                </button>
+
+            </div>
+        `).join("");
+
+    } catch (error) {
+
+        console.error("NOTICE LOADING ERROR:", error);
+
+        container.innerHTML =
+            "<p>Unable to load notices: " +
+            escapeHTML(error.message) +
+            "</p>";
+
+    }
+}
+
+
+document.getElementById("noticeForm").addEventListener("submit", async function(event) {
+    event.preventDefault();
+
+    const title = document.getElementById("noticeTitle").value.trim();
+    const description = document.getElementById("noticeDescription").value.trim();
+    const priority = document.getElementById("noticePriority").value;
+
+    if (!title || !description) return;
+
+    const notice = {
+        id: Date.now().toString(),
+        title,
+        description,
+        priority,
+        date: new Date().toLocaleString(),
+        createdAt: Date.now()
+    };
+
+    try {
+
+        await adminDb.collection("notices").add(notice);
+
+        await renderNotices();
+
+        document.getElementById("noticeForm").reset();
+
+        document.getElementById("noticeMessage").textContent =
+            "Notice published successfully!";
+
+    } catch (error) {
+
+        console.error("NOTICE PUBLISH ERROR:", error);
+
+        document.getElementById("noticeMessage").textContent =
+            "Unable to publish notice: " + error.message;
+
+    }
+});
+
+
+async function deleteNotice(id) {
+
+    if (!confirm("Are you sure you want to delete this notice?")) {
+        return;
+    }
+
+    try {
+
+        await adminDb.collection("notices")
+            .doc(id)
+            .delete();
+
+        alert("Notice deleted successfully!");
+
+        await renderNotices();
+
+    } catch (error) {
+
+        console.error("NOTICE DELETE ERROR:", error);
+
+        alert("Unable to delete notice: " + error.message);
+
+    }
+}
+
+
+renderNotices();
+// Initial calls
+
+
+// ===================================
+// FIREBASE ADMIN DASHBOARD SECURITY
+// ===================================
+
+let currentStaffRole = null;
+
+adminAuth.onAuthStateChanged(async function(user) {
+
+    if (!user) {
+        window.location.replace("login.html");
+        return;
+    }
+
+    try {
+
+        const userDoc = await adminDb
+            .collection("users")
+            .doc(user.uid)
+            .get();
+
+        if (!userDoc.exists) {
+            await adminAuth.signOut();
+            window.location.replace("login.html");
+            return;
+        }
+
+        const userData = userDoc.data();
+
+        const allowedRoles = [
+            "superadmin",
+            "admin",
+            "moderator"
+        ];
+
+        if (
+            userData.status !== "active" ||
+            !allowedRoles.includes(userData.role)
+        ) {
+            await adminAuth.signOut();
+            window.location.replace("login.html");
+            return;
+        }
+
+        currentStaffRole = userData.role;
+await loadFirebaseExamData();
+updateExamDropdown();
+updateMeritExamDropdown();
+updateDashboard();
+renderQuestionSummary();
+toggleQuestionType();
+        // Only Super Admin can see Staff Management
+        document.querySelectorAll(".superadmin-only").forEach(button => {
+            button.style.display =
+                currentStaffRole === "superadmin" ? "" : "none";
+        });
+
+        // Show dashboard after successful verification
+        document.body.style.visibility = "visible";
+
+    } catch (error) {
+
+        console.error("Dashboard Security Error:", error);
+
+        await adminAuth.signOut();
+
+        window.location.replace("login.html");
+
+    }
+
+});
+
+</script>
+
+</body>
+</html>

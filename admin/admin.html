@@ -1,0 +1,3688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard | RIKON'S EXAM CENTER</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f0f4fa;
+    color: #1e293b;
+    visibility: hidden; /* Firebase ভেরিফিকেশন না হওয়া পর্যন্ত হাইড থাকবে */
+}
+
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 250px;
+    height: 100vh;
+    background: linear-gradient(180deg, #172554, #101b3b);
+    color: white;
+    padding: 25px 15px;
+    overflow-y: auto;
+    box-shadow: 5px 0 25px rgba(15,23,42,.08);
+    z-index: 10;
+}
+
+.sidebar h2 {
+    font-size: 22px;
+    margin-bottom: 8px;
+}
+
+.sidebar p {
+    color: #bfdbfe;
+    font-size: 12px;
+    letter-spacing: 1px;
+    margin-bottom: 30px;
+}
+
+.nav-btn {
+    display: block;
+    width: 100%;
+    padding: 13px;
+    margin-bottom: 7px;
+    border: none;
+    border-left: 3px solid transparent;
+    border-radius: 7px;
+    background: transparent;
+    color: white;
+    text-align: left;
+    cursor: pointer;
+    font-size: 14px;
+    transition: .25s;
+}
+
+.nav-btn:hover {
+    background: rgba(255,255,255,.12);
+    padding-left: 20px;
+}
+
+.nav-btn.active {
+    background: linear-gradient(90deg,#2563eb,#3b82f6);
+    border-left-color: #93c5fd;
+}
+
+.main {
+    margin-left: 250px;
+    padding: 30px;
+}
+
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    gap: 10px;
+}
+.back-nav-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 8px;
+    background: #e2e8f0;
+    color: #1e293b;
+    font-size: 24px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.back-nav-btn:hover {
+    background: #cbd5e1;
+}
+.topbar h1 {
+    font-size: 25px;
+    font-weight: 750;
+}
+
+.admin-label {
+    background: #dbeafe;
+    color: #1d4ed8;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.stat-card {
+    position: relative;
+    overflow: hidden;
+    background: white;
+    padding: 22px;
+    border-radius: 12px;
+    border: 1px solid #e8eef7;
+    box-shadow: 0 5px 20px rgba(15,23,42,.04);
+    transition: .25s;
+}
+
+.stat-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg,#2563eb,#60a5fa);
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-card p {
+    color: #64748b;
+    font-size: 13px;
+}
+
+.stat-card h2 {
+    margin-top: 12px;
+    font-size: 30px;
+    color: #1d4ed8;
+}
+
+.content-card {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #e8eef7;
+    box-shadow: 0 5px 20px rgba(15,23,42,.035);
+}
+
+.content-card h2 {
+    margin-bottom: 18px;
+    font-size: 20px;
+}
+
+.section {
+    display: none;
+}
+
+.section.active {
+    display: block;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    font-size: 14px;
+    font-family: inherit;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+}
+
+label {
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.primary-btn {
+    background: linear-gradient(135deg,#2563eb,#1d4ed8);
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: .25s;
+}
+
+.primary-btn:hover {
+    transform: translateY(-2px);
+}
+
+.note {
+    background: #eff6ff;
+    color: #1e40af;
+    padding: 13px;
+    border-radius: 7px;
+    margin-bottom: 15px;
+    font-size: 13px;
+}
+
+.menu-toggle {
+    display: none;
+    background: #172554;
+    color: white;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.question-item {
+    padding: 15px;
+    margin: 12px 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.question-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 5px;
+    font-size: 12px;
+}
+
+.edit-question-btn, .edit-exam-btn {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 9px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 10px;
+    margin-right: 5px;
+}
+
+.delete-question-btn, .delete-exam-btn {
+    background: #dc2626;
+    color: white;
+    border: none;
+    padding: 9px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+@media(max-width:850px) {
+    .sidebar {
+        width: 220px;
+        transform: translateX(-100%);
+        transition: .3s;
+    }
+    .sidebar.open {
+        transform: translateX(0);
+    }
+    .main {
+        margin-left: 0;
+        padding: 18px;
+    }
+    .menu-toggle {
+        display: block;
+    }
+    .stats {
+        grid-template-columns: repeat(2,1fr);
+    }
+}
+
+@media(max-width:600px) {
+    .topbar {
+        flex-wrap: wrap;
+    }
+    .topbar h1 {
+        font-size: 20px;
+    }
+    .content-card {
+        padding: 16px;
+        overflow-x: auto;
+    }
+    .stat-card {
+        padding: 14px;
+    }
+    .stat-card h2 {
+        font-size: 25px;
+    }
+    .admin-label {
+        font-size: 11px;
+    }
+}
+
+body.printing-results #results input,
+body.printing-results #results select,
+body.printing-results #results button,
+body.printing-results #results #selectedResultCount,
+body.printing-results #results label:has(.result-select-checkbox) {
+    display: none !important;
+}
+
+@media print {
+    body.printing-results * {
+        visibility: hidden !important;
+    }
+    body.printing-results #results,
+    body.printing-results #results * {
+        visibility: visible !important;
+    }
+    body.printing-results #results {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: white;
+    }
+    body.printing-results button {
+        display: none !important;
+    }
+}
+
+</style>
+
+<!-- FIREBASE SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script src="../firebase-config.js"></script>
+</head>
+
+<body>
+
+
+<aside class="sidebar" id="sidebar">
+    <h2>RIKON'S EXAM CENTER</h2>
+    <p>ADMIN MANAGEMENT SYSTEM</p>
+
+    <button type="button" class="nav-btn active" data-page="dashboard">Dashboard</button>
+    <button type="button" class="nav-btn" data-page="courses">Course Management</button>
+    <button type="button" class="nav-btn" data-page="students">Students</button>
+    <button type="button" class="nav-btn superadmin-only" data-page="staff">Staff Management</button>
+    <button type="button" class="nav-btn" data-page="payments">Payment Management</button>
+    <button type="button" class="nav-btn" data-page="paymentSettings">Payment Settings</button>
+    <button type="button" class="nav-btn" data-page="analytics">Performance Analytics</button>
+    <button type="button" class="nav-btn" data-page="results">Results</button>
+    <button type="button" class="nav-btn" data-page="notices">Notice Board</button>
+    <button type="button" class="nav-btn" data-page="helpline">Helpline Management</button>
+    <button type="button" class="nav-btn" data-page="coupons">Coupon Management</button>
+</aside>
+
+<main class="main">
+
+    <div class="topbar">
+        <button
+    type="button"
+    id="backNavigationBtn"
+    class="back-nav-btn"
+    onclick="goBackAdminPage()"
+    title="Go Back">
+    ←
+</button>
+        <button type="button" class="menu-toggle" id="menuToggle">☰ Menu</button>
+        <h1 id="pageTitle">Dashboard</h1>
+        <span class="admin-label">Admin Panel</span>
+    </div>
+
+    <!-- DASHBOARD -->
+    <section class="section active" id="dashboard">
+        <div class="stats">
+            <div class="stat-card">
+    <p>Total Courses</p>
+    <h2 id="totalCourses">0</h2>
+</div>
+            <div class="stat-card">
+                <p>Total Questions</p>
+                <h2 id="totalQuestions">0</h2>
+            </div>
+            <div class="stat-card">
+                <p>Total Students</p>
+                <h2 id="totalStudents">0</h2>
+            </div>
+            <div class="stat-card">
+                <p>Results Published</p>
+                <h2>0</h2>
+            </div>
+        </div>
+
+        <div class="content-card">
+            <h2>Welcome, Administrator!</h2>
+            <p>Manage courses, course enrollments, and Course-Based examinations from one place.</p>
+            <br>
+            <button type="button" class="primary-btn" onclick="showPage('courses')">+ Manage Courses & Exams</button>
+        </div>
+
+        <div class="content-card">
+            <h2>Recent Course-Based Exams</h2>
+            <div id="recentExams">No examinations created yet.</div>
+        </div>
+
+        <!-- DATA BACKUP & RESTORE -->
+        <div class="content-card">
+            <h2>Data Backup & Restore</h2>
+            <p>Protect your examination center data.</p>
+            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:15px;">
+                <button type="button" onclick="backupAllData()" style="background:#2563eb; color:white; padding:12px 18px; border:none; border-radius:6px; cursor:pointer;">
+                    ⬇ Download Backup
+                </button>
+                <button type="button" onclick="document.getElementById('restoreBackupFile').click()" style="background:#16a34a; color:white; padding:12px 18px; border:none; border-radius:6px; cursor:pointer;">
+                    ⬆ Restore Backup
+                </button>
+                <input type="file" id="restoreBackupFile" accept=".json,application/json" onchange="restoreAllData(event)" style="display:none;">
+            </div>
+            <p style="margin-top:12px; color:#64748b; font-size:13px;">
+                Backup your exams, questions, students, results and notices.
+            </p>
+        </div>
+    </section>
+
+    <!-- HELPLINE MANAGEMENT SECTION -->
+    <section class="section" id="helpline">
+        <div class="content-card">
+            <h2>Helpline & Hotline Settings</h2>
+            <p>Update the official hotline numbers and support info visible to students.</p>
+
+            <form id="helplineSettingsForm" onsubmit="saveHelplineSettings(event)">
+                <label>Hotline / Phone Number</label>
+                <input type="text" id="adminHelpPhone" placeholder="e.g., 01712345678 or +880..." required>
+
+                <label>Support Email</label>
+                <input type="email" id="adminHelpEmail" placeholder="support@rikonexam.com" required>
+
+<label>Telegram Support Link</label>
+<input type="url" id="adminHelpTelegram"
+    placeholder="https://t.me/YourSupportUsername">
+
+<label>WhatsApp Number (International Format)</label>
+<input type="text" id="adminHelpWhatsApp"
+    placeholder="88017XXXXXXXX">
+<label>WhatsApp Student Group Invite Link</label>
+<input
+    type="url"
+    id="adminHelpWhatsAppGroup"
+    placeholder="https://chat.whatsapp.com/..."
+>
+                <label>Support Hours</label>
+                <input type="text" id="adminHelpHours" placeholder="e.g., Sat - Thu: 9:00 AM - 9:00 PM">
+
+                <label>Additional Notice / Instructions</label>
+                <textarea id="adminHelpNotice" rows="2" placeholder="e.g., Call us or WhatsApp for urgent payment issues."></textarea>
+
+                <button type="submit" class="primary-btn">Save Helpline Settings</button>
+            </form>
+            <p id="settingsSaveMsg" style="margin-top:10px;"></p>
+        </div>
+
+        <div class="content-card" style="margin-top:20px;">
+            <h2>Student Support Tickets</h2>
+            <div class="note">Review queries and complaints sent by students.</div>
+            <div id="adminHelplineList" style="margin-top:20px;">Loading support tickets...</div>
+        </div>
+    </section>
+
+    <!-- NOTICE BOARD SECTION -->
+    <section class="section" id="notices">
+        <div class="content-card">
+            <h2>Notice Board Management</h2>
+            <p>Create and manage announcements for students.</p>
+
+            <form id="noticeForm">
+                <input type="text" id="noticeTitle" placeholder="Notice Title" required>
+                <textarea id="noticeDescription" placeholder="Write notice details..." required></textarea>
+                <select id="noticePriority" required>
+                    <option value="normal">Normal Notice</option>
+                    <option value="important">Important Notice</option>
+                    <option value="urgent">Urgent Notice</option>
+                </select>
+                <button type="submit" class="primary-btn">Publish Notice</button>
+            </form>
+            <p id="noticeMessage"></p>
+        </div>
+
+        <div class="content-card">
+            <h2>Published Notices</h2>
+            <div id="noticeList">No notices published yet.</div>
+        </div>
+    </section>
+
+    <!-- COURSE & COUPON MANAGEMENT SECTION -->
+    <!-- COURSE & COUPON MANAGEMENT SECTION -->
+    <section class="section" id="courses">
+        <!-- মেইন কোর্স লিস্ট ও ফর্ম কন্টেইনার -->
+        <div id="mainCoursesContainer">
+            <div class="content-card">
+                <h2>Create New Course / Exam Package</h2>
+                <form id="createCourseForm" onsubmit="saveNewCourse(event)">
+                    <label>Course Title</label>
+                    <input type="text" id="courseTitle" placeholder="Course Name" required>
+                    <label>Short Description</label>
+<textarea id="courseShortDescription"
+    placeholder="Write a short course introduction..."
+    rows="2"></textarea>
+
+<label>Full Course Description</label>
+<textarea id="courseDescription"
+    placeholder="Describe everything about this course..."
+    rows="5"></textarea>
+
+<label>What Students Will Get (Benefits)</label>
+<textarea id="courseBenefits"
+    placeholder="Write each benefit on a new line..."
+    rows="5"></textarea>
+
+<label>Course Duration</label>
+<input type="text" id="courseDuration"
+    placeholder="Example: 3 Months">
+                    <label>Upload Banner Image</label>
+<input type="file" id="courseBannerFile" accept="image/*" style="margin-top:5px; margin-bottom:15px;">
+                    <div style="display: flex; gap: 15px;">
+                        <div style="flex:1;"><label>Regular Price (৳)</label><input type="number" id="courseRegularPrice" required></div>
+                        <div style="flex:1;"><label>Offer Price (৳)</label><input type="number" id="courseOfferPrice" required></div>
+                    </div>
+                    <button type="submit" class="primary-btn" style="margin-top: 15px;">Create Course</button>
+                </form>
+                <p id="courseCreateMsg" style="margin-top:10px;"></p>
+            </div>
+
+            <div class="content-card" style="margin-top:20px;">
+                <h2>All Courses List</h2>
+                <p style="color:#64748b; font-size:13px; margin-bottom:10px;">👉 যে কোনো কোর্সের ওপর ক্লিক করলেই ওই কোর্সের নিজস্ব ড্যাশবোর্ড ওপেন হবে।</p>
+                <div id="adminCoursesList" style="margin-top:15px;">Loading courses...</div>
+            </div>
+        </div>
+
+        <!-- নির্দিষ্ট কোর্সের নিজস্ব ড্যাশবোর্ড (যা ক্লিক করলে শো করবে) -->
+        <div id="specificCourseDashboard" style="display:none;"></div>
+    </section>
+    <!-- COUPON MANAGEMENT SECTION -->
+<section class="section" id="coupons">
+
+    <div class="content-card">
+        <h2>Coupon Management</h2>
+        <p style="color:#64748b; margin:8px 0 20px;">
+            Select coupon type and create a new coupon.
+        </p>
+
+        <form id="createCouponForm" onsubmit="saveNewCoupon(event)">
+
+            <label>Coupon Type</label>
+            <select id="couponScope" required>
+                <option value="global">Global Coupon (All Students & Courses)</option>
+                <option value="course">Course-Specific Coupon</option>
+                <option value="student">Individual Student Coupon</option>
+            </select>
+
+            <div id="couponCourseField" style="display:none; margin-top:15px;">
+                <label>Select Course</label>
+                <select id="couponCourseId">
+                    <option value="">Select a Course</option>
+                </select>
+            </div>
+
+            <div id="couponStudentField" style="display:none; margin-top:15px;">
+                <label>Student ID</label>
+                <input type="text" id="couponStudentId" placeholder="Enter Student ID">
+            </div>
+
+            <label style="display:block; margin-top:15px;">Coupon Code</label>
+            <input type="text" id="couponCode" placeholder="Example: RIKON20" required>
+
+            <label style="display:block; margin-top:15px;">Discount Type</label>
+            <select id="couponType" required>
+                <option value="percentage">Percentage (%)</option>
+                <option value="fixed">Fixed Amount (৳)</option>
+            </select>
+
+            <label style="display:block; margin-top:15px;">Discount Value</label>
+            <input type="number" id="couponValue" min="1" placeholder="Enter discount value" required>
+
+            <button type="submit" id="couponSubmitBtn" class="primary-btn" style="margin-top:20px;">
+    Create Coupon
+</button>
+
+<button type="button" id="cancelCouponEditBtn"
+    onclick="cancelCouponEdit()"
+    style="display:none; margin-top:10px;">
+    Cancel Edit
+</button>
+
+            <p id="couponCreateMsg" style="margin-top:10px;"></p>
+        </form>
+    </div>
+
+    <div class="content-card" style="margin-top:20px;">
+        <h2>All Coupons</h2>
+        <div id="adminCouponsList" style="margin-top:15px;">
+            Loading coupons...
+        </div>
+    </div>
+
+</section>
+    <!-- CREATE EXAM -->
+
+    <!-- QUESTION BANK -->
+
+    <!-- SCHEDULE -->
+
+    <!-- STUDENTS -->
+    <section class="section" id="students">
+        <div class="content-card">
+            <h2>Student Management</h2>
+            <div class="note">View all registered students and their contact information.</div>
+            <h3 style="margin-bottom:15px;">Total Registered Students: <span id="studentCount">0</span></h3>
+            <input type="text" id="studentSearch" placeholder="Search by name, email or mobile number...">
+            <div id="studentList">No students registered yet.</div>
+        </div>
+    </section>
+
+    <!-- PAYMENT MANAGEMENT -->
+    <section class="section" id="payments">
+        <div class="content-card">
+            <h2>Payment Management</h2>
+            <div class="note">Review and manage student examination payments.</div>
+            
+            <div class="stats" style="margin:20px 0;">
+                <div class="stat-card">
+                    <p>Total Payments</p>
+                    <h2 id="totalPayments">0</h2>
+                </div>
+                <div class="stat-card">
+                    <p>Pending Payments</p>
+                    <h2 id="pendingPayments">0</h2>
+                </div>
+                <div class="stat-card">
+                    <p>Approved Payments</p>
+                    <h2 id="approvedPayments">0</h2>
+                </div>
+                <div class="stat-card">
+                    <p>Rejected Payments</p>
+                    <h2 id="rejectedPayments">0</h2>
+                </div>
+                <div class="stat-card">
+                    <p>Total Revenue</p>
+                    <h2 id="totalRevenue">৳0</h2>
+                </div>
+            </div>
+            <div id="paymentList">Loading payments...</div>
+        </div>
+    </section>
+
+    <!-- PAYMENT SETTINGS -->
+    <section class="section" id="paymentSettings">
+        <div class="content-card">
+            <h2>Payment Settings</h2>
+            <p>Set your payment receiving numbers.</p>
+
+            <label>bKash Number</label>
+            <input type="tel" id="adminBkashNumber" placeholder="Enter bKash number">
+
+            <label>Nagad Number</label>
+            <input type="tel" id="adminNagadNumber" placeholder="Enter Nagad number">
+
+            <label>Rocket Number</label>
+            <input type="tel" id="adminRocketNumber" placeholder="Enter Rocket number">
+
+            <button type="button" onclick="savePaymentSettings()" class="primary-btn">Save Payment Settings</button>
+        </div>
+    </section>
+
+    <!-- STAFF MANAGEMENT -->
+    <section class="section" id="staff">
+        <div class="content-card">
+            <h2>Staff Management</h2>
+            <div class="note">
+                Manage Admin and Moderator accounts. Only Super Admin can access this section.
+            </div>
+            <div id="staffManagementMessage" style="margin-top:15px; color:#64748b;">Loading staff accounts...</div>
+            <div id="staffList" style="margin-top:20px;">No staff accounts available.</div>
+        </div>
+    </section>
+
+    <!-- STUDENT PERFORMANCE ANALYTICS -->
+    <section class="section" id="analytics">
+        <div class="content-card">
+            <h2>Student Performance Analytics</h2>
+            <div class="note">Analyze student examination performance and rankings.</div>
+
+            <div class="stats">
+                <div class="stat-card">
+                    <p>Total Students</p>
+                    <h2 id="analyticsStudents">0</h2>
+                </div>
+                <div class="stat-card">
+                    <p>Total Results</p>
+                    <h2 id="analyticsResults">0</h2>
+                </div>
+                <div class="stat-card">
+                    <p>Average Marks</p>
+                    <h2 id="analyticsAverage">0%</h2>
+                </div>
+                <div class="stat-card">
+                    <p>Highest Marks</p>
+                    <h2 id="analyticsHighest">0%</h2>
+                </div>
+            </div>
+
+            <h3 style="margin-top:25px;">Top 10 Students</h3>
+            <div id="analyticsTopStudents">No performance data available.</div>
+
+            <h3 style="margin-top:30px;">Student Performance Chart</h3>
+            <div id="analyticsChart" style="margin-top:15px;">No chart data available.</div>
+
+            <h3 style="margin-top:30px;">Subject-wise Performance</h3>
+            <div id="subjectAnalytics" style="margin-top:15px;">No subject data available.</div>
+        </div>
+    </section>
+
+    <!-- RESULTS -->
+    <section class="section" id="results">
+        <div class="content-card">
+            <h2>Examination Results</h2>
+            <div class="note">View submitted examination results and evaluate students' written answers.</div>
+            
+            <div style="display:flex; flex-wrap:wrap; gap:12px; margin:20px 0;">
+                <input type="text" id="resultSearch" placeholder="Search student name, ID or email..." style="flex:1; min-width:220px;">
+                <select id="resultExamFilter" style="flex:1; min-width:200px;">
+                    <option value="">All Examinations</option>
+                </select>
+                <button type="button" onclick="resetResultFilters()" style="background:#16a34a; color:white; border:none; padding:10px 18px; border-radius:6px; cursor:pointer;">Reset Filter</button>
+                <button type="button" onclick="exportResultsCSV()" style="background:#2563eb; color:white; border:none; padding:10px 18px; border-radius:6px; cursor:pointer;"><span>⬇ Export Results</span></button>
+            </div>
+
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin:15px 0;">
+                <button type="button" onclick="selectAllResults(true)" style="background:#2563eb; color:white; padding:8px 14px; border:none; border-radius:6px; cursor:pointer;">Select All</button>
+                <button type="button" onclick="selectAllResults(false)" style="background:#64748b; color:white; padding:8px 14px; border:none; border-radius:6px; cursor:pointer;">Deselect All</button>
+                <button type="button" onclick="deleteSelectedResults()" style="background:#ea580c; color:white; padding:8px 14px; border:none; border-radius:6px; cursor:pointer;">Delete Selected</button>
+                <button type="button" onclick="deleteAllResults()" style="background:#dc2626; color:white; padding:8px 14px; border:none; border-radius:6px; cursor:pointer;">Delete All Results</button>
+            </div>
+
+            <p id="selectedResultCount" style="font-weight:bold; color:#2563eb;">Selected Results: 0</p>
+
+            <div style="margin:15px 0;">
+                <button type="button" onclick="printResults()" style="background:#2563eb; color:white; padding:12px 18px; border:none; border-radius:6px; cursor:pointer;">🖨️ Print Results</button>
+            </div>
+            <div id="resultsList">No student results available yet.</div>
+        </div>
+    </section>
+
+    <!-- MERIT LIST -->
+
+    <!-- IMPORT -->
+
+</main>
+
+<script>
+let examList = [];
+let questionList = [];
+let editingQuestionId = null;
+let draftCourseQuestions = [];
+async function loadFirebaseExamData() {
+    try {
+        const examSnapshot = await adminDb.collection("exams").get();
+        // Active Admin UI uses Course-Based exams only. Legacy Firestore docs remain untouched.
+        examList = examSnapshot.docs
+            .filter(doc => Boolean(doc.data().courseId))
+            .map(doc => ({ ...doc.data(), firestoreId: doc.id }));
+
+        const questionSnapshot = await adminDb.collection("questions").get();
+        const courseExamIds = new Set(examList.map(exam => String(exam.firestoreId)));
+        questionList = questionSnapshot.docs
+            .filter(doc => Boolean(doc.data().examId) && courseExamIds.has(String(doc.data().examId)))
+            .map(doc => ({ ...doc.data(), firestoreId: doc.id }));
+    } catch (error) {
+        console.error("Firebase Data Loading Error:", error);
+        throw error;
+    }
+}
+
+const titles = {
+    dashboard: "Dashboard",
+    courses: "Course Management",
+coupons: "Coupon Management",
+    helpline: "Helpline Management",
+    students: "Student Management",
+    staff: "Staff Management",
+    analytics: "Student Performance Analytics",
+    results: "Examination Results",
+    notices: "Notice Board",
+    payments: "Payment Management",
+    paymentSettings: "Payment Settings"
+};
+
+async function renderStaffList() {
+    const container = document.getElementById("staffList");
+    const message = document.getElementById("staffManagementMessage");
+    if (!container || !message) return;
+
+    try {
+        const currentUser = adminAuth.currentUser;
+        if (!currentUser) {
+            message.textContent = "Please login first.";
+            container.innerHTML = "";
+            return;
+        }
+
+        const myDoc = await adminDb.collection("users").doc(currentUser.uid).get();
+        if (!myDoc.exists || myDoc.data().role !== "superadmin" || myDoc.data().status !== "active") {
+            message.textContent = "Access denied.";
+            container.innerHTML = "";
+            return;
+        }
+
+        message.textContent = "Staff accounts loaded successfully.";
+        const snapshot = await adminDb.collection("users").get();
+        const staffMembers = [];
+
+        snapshot.forEach(doc => {
+            const staff = doc.data();
+            if (staff.role === "admin" || staff.role === "moderator") {
+                staffMembers.push({ id: doc.id, ...staff });
+            }
+        });
+
+        if (staffMembers.length === 0) {
+            container.textContent = "No Admin or Moderator accounts found.";
+            return;
+        }
+
+        container.innerHTML = staffMembers.map(staff => `
+            <div class="content-card" style="margin-top:15px;">
+                <h3>${escapeHTML(staff.name || "Unnamed Staff")}</h3>
+                <p><strong>Email:</strong> ${escapeHTML(staff.email || "N/A")}</p>
+                <p><strong>Role:</strong> ${escapeHTML(staff.role)}</p>
+                <p><strong>Status:</strong> ${escapeHTML(staff.status || "N/A")}</p>
+            </div>
+        `).join("");
+    } catch (error) {
+        console.error("Staff List Error:", error);
+        message.textContent = "Unable to load staff accounts.";
+        container.textContent = error.message;
+    }
+}
+
+let adminPageHistory = [];
+let currentAdminPage = "dashboard";
+let currentCourseTab = "createExam";
+
+
+function goBackAdminPage() {
+    if (adminPageHistory.length === 0) return;
+
+    const previousPage = adminPageHistory.pop();
+
+    // Course Dashboard-এর Tab History
+    if (previousPage.startsWith("course-tab-")) {
+        const previousTab = previousPage.replace("course-tab-", "");
+        switchCourseTab(previousTab, true);
+    }
+// Exam Edit Mode থেকে বের হওয়া
+else if (previousPage === "coupon-edit") {
+    cancelCouponEdit();
+}
+else if (previousPage === "course-edit") {
+    window.editingCourseId = null;
+
+    document.getElementById("createCourseForm").reset();
+
+    document.querySelector("#createCourseForm button[type='submit']")
+        .textContent = "Create Course";
+
+    document.getElementById("courseCreateMsg").textContent = "";
+}
+else if (previousPage === "course-exam-edit") {
+    editingCourseExamId = null;
+
+    document.getElementById("courseExamForm").reset();
+
+    document.querySelector("#courseExamForm button[type='submit']")
+        .textContent = "Create Exam";
+
+    document.getElementById("courseExamMsg").textContent = "";
+}
+    // Course List-এ ফিরে যাওয়া
+    else if (previousPage === "courses-list") {
+        document.getElementById("specificCourseDashboard").style.display = "none";
+        document.getElementById("mainCoursesContainer").style.display = "block";
+
+        currentAdminPage = "courses";
+    }
+
+    // অন্য Section-এ ফিরে যাওয়া
+    else {
+        showPage(previousPage, true);
+    }
+
+    const backButton = document.getElementById("backNavigationBtn");
+
+    if (backButton) {
+        backButton.style.display =
+            adminPageHistory.length > 0 ? "inline-flex" : "none";
+    }
+}
+
+
+function showPage(page, isBackNavigation = false) {
+    const selectedPage = document.getElementById(page);
+    if (!selectedPage) return;
+
+    if (!isBackNavigation && currentAdminPage !== page) {
+        adminPageHistory.push(currentAdminPage);
+    }
+// Course Management-এ গেলে সবসময় Course List দেখাবে
+if (page === "courses") {
+    const courseDashboard = document.getElementById("specificCourseDashboard");
+    const coursesContainer = document.getElementById("mainCoursesContainer");
+
+    if (courseDashboard) courseDashboard.style.display = "none";
+    if (coursesContainer) coursesContainer.style.display = "block";
+}
+    currentAdminPage = page;
+
+    document.querySelectorAll(".section").forEach(section => {
+        section.classList.remove("active");
+    });
+
+    selectedPage.classList.add("active");
+
+    if (page === "students") renderStudentList();
+    if (page === "results") renderResults();
+    if (page === "helpline") renderAdminHelpline();
+    if (page === "courses") renderAdminCourses();
+    if (page === "coupons") loadAdminCouponsList();
+    if (page === "payments") renderPayments();
+    if (page === "paymentSettings") loadPaymentSettings();
+    if (page === "analytics") renderAnalytics();
+    if (page === "staff") renderStaffList();
+
+    document.querySelectorAll(".nav-btn").forEach(button => {
+        button.classList.toggle("active", button.dataset.page === page);
+    });
+
+    document.getElementById("pageTitle").textContent =
+        titles[page] || "Dashboard";
+
+    document.getElementById("sidebar").classList.remove("open");
+
+    const backButton = document.getElementById("backNavigationBtn");
+
+    if (backButton) {
+        backButton.style.display =
+            adminPageHistory.length > 0 ? "inline-flex" : "none";
+    }
+}
+
+document.querySelectorAll(".nav-btn").forEach(button => {
+    button.addEventListener("click", () => {
+        showPage(button.dataset.page);
+    });
+});
+
+document.getElementById("menuToggle").addEventListener("click", () => {
+    document.getElementById("sidebar").classList.toggle("open");
+});
+function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[char]);
+}
+
+async function renderAdminCourses() {
+    loadAdminCoursesList();
+}
+
+
+
+async function saveNewCourse(event) {
+    event.preventDefault();
+
+    const title = document.getElementById("courseTitle").value.trim();
+    const shortDescription = document.getElementById("courseShortDescription").value.trim();
+    const description = document.getElementById("courseDescription").value.trim();
+    const benefits = document.getElementById("courseBenefits").value
+        .split("\n")
+        .map(item => item.trim())
+        .filter(item => item !== "");
+    const duration = document.getElementById("courseDuration").value.trim();
+
+    const bannerFile = document.getElementById("courseBannerFile").files[0];
+    const regularPrice = Number(document.getElementById("courseRegularPrice").value);
+    const offerPrice = Number(document.getElementById("courseOfferPrice").value);
+    const msg = document.getElementById("courseCreateMsg");
+
+    msg.style.color = "red";
+    msg.textContent = "";
+
+    if (!title) {
+        msg.textContent = "Please enter course title.";
+        return;
+    }
+
+    if (!Number.isFinite(regularPrice) || regularPrice < 0 ||
+        !Number.isFinite(offerPrice) || offerPrice < 0) {
+        msg.textContent = "Please enter valid course prices.";
+        return;
+    }
+
+    try {
+        msg.textContent = "Creating course...";
+
+        const bannerUrl = await readAndCompressBanner(bannerFile);
+
+       
+const isEditing = !!window.editingCourseId;
+const courseId = isEditing
+    ? window.editingCourseId
+    : "course_" + Date.now();
+
+let existingCourse = {};
+
+if (isEditing) {
+    const existingDoc = await adminDb.collection("courses").doc(courseId).get();
+
+    if (!existingDoc.exists) {
+        throw new Error("Course not found!");
+    }
+
+    existingCourse = existingDoc.data();
+}
+
+const courseData = {
+    ...existingCourse,
+    id: courseId,
+    title,
+    shortDescription,
+    description,
+    benefits,
+    duration,
+    bannerUrl: bannerFile ? bannerUrl : (existingCourse.bannerUrl || ""),
+    regularPrice,
+    offerPrice,
+    exams: existingCourse.exams || [],
+    studyMaterials: existingCourse.studyMaterials || [],
+    videoLessons: existingCourse.videoLessons || [],
+    createdAt: existingCourse.createdAt || Date.now()
+};
+
+await adminDb.collection("courses").doc(courseId).set(courseData);
+
+window.editingCourseId = null;
+
+        
+msg.style.color = "green";
+msg.textContent = isEditing
+    ? "Course updated successfully!"
+    : "Course created successfully!";
+
+document.getElementById("createCourseForm").reset();
+window.editingCourseId = null;
+
+document.querySelector("#createCourseForm button[type='submit']")
+    .textContent = "Create Course";
+
+await loadAdminCoursesList();
+
+
+    } catch (error) {
+        console.error("Course create error:", error);
+        msg.style.color = "red";
+        msg.textContent = "Failed to create course: " + error.message;
+    }
+}
+
+function readAndCompressBanner(file) {
+    return new Promise((resolve, reject) => {
+        if (!file) {
+            resolve("");
+            return;
+        }
+        if (!file.type.startsWith("image/")) {
+            reject(new Error("Please select a valid image file."));
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            reject(new Error("Banner image must be less than 5 MB."));
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement("canvas");
+                const maxWidth = 800;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0, width, height);
+
+                const compressedBase64 = canvas.toDataURL("image/jpeg", 0.72);
+
+                // Firestore ডকুমেন্টের 1MB সীমা ঠিক রাখতে চেক
+                if (compressedBase64.length > 850000) {
+                    reject(new Error("Image is still too large. Please choose a smaller banner."));
+                    return;
+                }
+                resolve(compressedBase64);
+            };
+            img.onerror = () => reject(new Error("Unable to load selected image."));
+            img.src = e.target.result;
+        };
+        reader.onerror = () => reject(new Error("Failed to read file."));
+        reader.readAsDataURL(file);
+    });
+}
+
+async function loadAdminCoursesList() {
+    const container = document.getElementById("adminCoursesList");
+    if (!container) return;
+
+    try {
+        const snapshot = await adminDb.collection("courses").get();
+        const courses = snapshot.docs.map(doc => doc.data())
+            .sort((a, b) => b.createdAt - a.createdAt);
+
+        if (courses.length === 0) {
+            container.innerHTML = "<p>No courses created yet.</p>";
+            return;
+        }
+
+        container.innerHTML = courses.map(course => `
+            <div class="question-item" style="margin-top:15px; background:white; padding:18px; border-radius:10px; border:1px solid #e2e8f0; display:flex; gap:15px; align-items:center; flex-wrap:wrap; cursor:pointer;"
+                onclick="openCourseDashboard('${course.id}', '${escapeHTML(course.title)}')">
+
+                <img src="${escapeHTML(course.bannerUrl || '')}" alt="Banner"
+                    style="width:120px; height:70px; object-fit:cover; border-radius:6px;">
+
+                <div style="flex:1; min-width:200px;">
+                    <h3 style="margin:0 0 5px; color:#1e293b;">
+                        ${escapeHTML(course.title)}
+                    </h3>
+
+                    <p style="margin:0; color:#475569;">
+                        Price: <del>৳${course.regularPrice}</del>
+                        <strong>৳${course.offerPrice}</strong>
+                        | Exams: <strong>${(course.exams || []).length}</strong>
+                    </p>
+
+                    <small style="color:#2563eb; font-weight:bold;">
+                        👉 Click to manage exams & questions
+                    </small>
+
+                    <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+
+                        <button type="button"
+                            onclick="event.stopPropagation(); editAdminCourse('${course.id}')"
+                            style="background:#0d9488; color:white; border:none; padding:8px 14px; border-radius:6px; cursor:pointer;">
+                            ✏️ Edit Course
+                        </button>
+
+                        <button type="button"
+                            onclick="event.stopPropagation(); toggleAdminCourseHighlight('${course.id}', ${course.isHighlighted === true})"
+                            style="background:${course.isHighlighted === true ? '#64748b' : '#2563eb'}; color:white; border:none; padding:8px 14px; border-radius:6px; cursor:pointer;">
+                            ${course.isHighlighted === true ? '⭐ Unhighlight Course' : '⭐ Highlight Course'}
+                        </button>
+
+                    </div>
+                </div>
+
+                <button type="button"
+                    onclick="event.stopPropagation(); deleteAdminCourse('${course.id}')"
+                    style="background:#dc2626; color:white; border:none; padding:8px 14px; border-radius:6px; cursor:pointer;">
+                    Delete
+                </button>
+
+            </div>
+        `).join("");
+
+    } catch (error) {
+        console.error("Error loading courses list:", error);
+        container.innerHTML = "<p>Unable to load courses list.</p>";
+    }
+}
+
+async function editAdminCourse(courseId) {
+    try {
+        const doc = await adminDb.collection("courses").doc(courseId).get();
+
+        if (!doc.exists) {
+            alert("Course not found!");
+            return;
+        }
+
+        const course = doc.data();
+
+        document.getElementById("courseTitle").value = course.title || "";
+        document.getElementById("courseShortDescription").value = course.shortDescription || "";
+        document.getElementById("courseDescription").value = course.description || "";
+        document.getElementById("courseBenefits").value = (course.benefits || []).join("\n");
+        document.getElementById("courseDuration").value = course.duration || "";
+
+        document.getElementById("courseRegularPrice").value = course.regularPrice ?? "";
+        document.getElementById("courseOfferPrice").value = course.offerPrice ?? "";
+        if (!window.editingCourseId) {
+        adminPageHistory.push("course-edit");
+        document.getElementById("backNavigationBtn").style.display = "inline-flex";
+        }
+        window.editingCourseId = courseId;
+
+        const submitBtn = document.querySelector("#createCourseForm button[type='submit']");
+        submitBtn.textContent = "Update Course";
+
+        document.getElementById("courseCreateMsg").style.color = "#2563eb";
+        document.getElementById("courseCreateMsg").textContent = "Editing course: " + course.title;
+
+        document.getElementById("mainCoursesContainer").scrollIntoView({
+            behavior: "smooth"
+        });
+
+    } catch (error) {
+        console.error("EDIT COURSE ERROR:", error);
+        alert("Unable to load course: " + error.message);
+    }
+}
+
+async function toggleAdminCourseHighlight(courseId, currentState) {
+    try {
+        await adminDb.collection("courses").doc(courseId).update({
+            isHighlighted: !currentState
+        });
+
+        alert(
+            !currentState
+                ? "Course highlighted successfully! ⭐"
+                : "Course unhighlighted successfully."
+        );
+
+        await loadAdminCoursesList();
+
+    } catch (error) {
+        console.error("COURSE HIGHLIGHT ERROR:", error);
+        alert("Unable to update course highlight: " + error.message);
+    }
+}
+async function loadCouponCourseOptions() {
+    const select = document.getElementById("couponCourseId");
+    if (!select) return;
+
+    try {
+        const snapshot = await adminDb.collection("courses").get();
+
+        const courses = snapshot.docs.map(doc => doc.data())
+            .sort((a, b) => (a.title || "").localeCompare(b.title || ""));
+
+        select.innerHTML = '<option value="">Select a Course</option>';
+
+        courses.forEach(course => {
+            if (!course.id || !course.title) return;
+
+            const option = document.createElement("option");
+            option.value = course.id;
+            option.textContent = course.title;
+            select.appendChild(option);
+        });
+
+    } catch (error) {
+        console.error("Error loading coupon course options:", error);
+        select.innerHTML = '<option value="">Unable to load courses</option>';
+    }
+}
+function handleCouponScopeChange() {
+    const scope = document.getElementById("couponScope").value;
+
+    const courseField = document.getElementById("couponCourseField");
+    const studentField = document.getElementById("couponStudentField");
+
+    const courseSelect = document.getElementById("couponCourseId");
+    const studentInput = document.getElementById("couponStudentId");
+
+    courseField.style.display =
+        (scope === "course" || scope === "student") ? "block" : "none";
+
+    studentField.style.display =
+        scope === "student" ? "block" : "none";
+
+    courseSelect.required = scope === "course";
+    studentInput.required = scope === "student";
+
+    const courseLabel = courseField.querySelector("label");
+
+    if (courseLabel) {
+        courseLabel.textContent =
+            scope === "student"
+                ? "Select Course (Optional)"
+                : "Select Course";
+    }
+
+    if (scope === "course" || scope === "student") {
+        loadCouponCourseOptions();
+    }
+}
+
+document.getElementById("couponScope").addEventListener(
+    "change",
+    handleCouponScopeChange
+);
+async function renderResults() {
+    const container = document.getElementById("resultsList");
+    if (!container) return;
+
+    const searchInput = document.getElementById("resultSearch");
+    const examFilter = document.getElementById("resultExamFilter");
+
+    if (examFilter) {
+        const exams = examList;
+        const previousValue = examFilter.value;
+        examFilter.innerHTML = '<option value="">All Examinations</option>' +
+            exams.map(exam => `<option value="${escapeHTML(exam.name)}">${escapeHTML(exam.name)}</option>`).join("");
+        examFilter.value = previousValue;
+    }
+
+    if (searchInput) searchInput.oninput = renderResults;
+    if (examFilter) examFilter.onchange = renderResults;
+
+    const searchText = searchInput ? searchInput.value.trim().toLowerCase() : "";
+    const selectedExam = examFilter ? examFilter.value : "";
+    let results = [];
+
+    try {
+        const resultSnapshot = await adminDb.collection("results").get();
+        results = resultSnapshot.docs
+            .map(doc => ({ ...doc.data(), firestoreId: doc.id }))
+            .filter(result => Boolean(result.courseId));
+    } catch (error) {
+        console.error("FIREBASE RESULTS LOAD ERROR:", error);
+        container.innerHTML = `<p>Unable to load results. Please try again.</p>`;
+        return;
+    }
+
+    if (!Array.isArray(results) || results.length === 0) {
+        container.innerHTML = "<p>No student results available yet.</p>";
+        return;
+    }
+
+    const filteredResults = results.filter(result => {
+        const matchesSearch = String(result.studentName || "").toLowerCase().includes(searchText) ||
+            String(result.studentId || "").toLowerCase().includes(searchText) ||
+            String(result.studentEmail || "").toLowerCase().includes(searchText);
+        const matchesExam = !selectedExam || String(result.examName || "") === selectedExam;
+        return matchesSearch && matchesExam;
+    });
+
+    container.innerHTML = filteredResults.map(result => {
+        const answers = Array.isArray(result.answers) ? result.answers : [];
+        const evaluations = result.writtenEvaluations || {};
+        const evaluatedMarks = Object.values(evaluations).reduce((sum, value) => sum + (Number(value) || 0), 0);
+        const finalMarks = Number(result.obtainedMarks || 0) + evaluatedMarks;
+
+        return `
+            <div class="question-item" style="margin-top:15px;">
+                <label style="display:flex; align-items:center; gap:8px; margin-bottom:12px; color:#2563eb; font-weight:bold;">
+                    <input type="checkbox" class="result-select-checkbox" value="${result.id}" onchange="updateSelectedResultCount()" style="width:18px; height:18px;">
+                    Select This Result
+                </label>
+                <h3>${escapeHTML(result.studentName || "Unknown Student")}</h3>
+                <p><strong>Student ID:</strong> ${escapeHTML(result.studentId)}</p>
+                <p><strong>Email:</strong> ${escapeHTML(result.studentEmail)}</p>
+                <p><strong>Exam:</strong> ${escapeHTML(result.examName)}</p>
+                <p><strong>Date:</strong> ${escapeHTML(result.date)}</p>
+                <p style="color:#dc2626; font-weight:bold;">⚠ Tab Switching Warnings: ${Number(result.tabSwitchWarnings || 0)}</p>
+                <p><strong>MCQ Marks:</strong> ${Number(result.obtainedMarks || 0)}</p>
+                <p><strong>Final Marks:</strong> ${finalMarks} / ${Number(result.totalMarks || 0)}</p>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
+                    <button type="button" onclick="editResult('${result.id}')" style="background:#2563eb; color:white; border:none; padding:8px 14px; border-radius:6px; cursor:pointer;">Edit Result</button>
+                    <button type="button" onclick="deleteResult('${result.id}')" style="background:#dc2626; color:white; border:none; padding:8px 14px; border-radius:6px; cursor:pointer;">Delete Result</button>
+                </div>
+                <hr style="margin:12px 0;">
+                <h4>Submitted Answers</h4>
+                ${answers.map((answer, index) => {
+                    const isWritten = answer.type === "written";
+                    return `
+                        <div style="padding:12px; margin-top:10px; background:#f1f5f9; border-radius:8px;">
+                            <p><strong>Question ${index + 1}:</strong> ${escapeHTML(answer.question || "")}</p>
+                            <p><strong>Type:</strong> ${escapeHTML(answer.type || "")}</p>
+                            <p><strong>Student Answer:</strong></p>
+                            <p style="white-space:pre-wrap;">${escapeHTML(answer.answer || "No answer submitted")}</p>
+                            ${isWritten ? `
+                                <p><strong>Maximum Marks:</strong> ${Number(answer.marks || 0)}</p>
+                                <p><strong>Evaluated Marks:</strong> ${evaluations[index] !== undefined ? evaluations[index] : "Pending"}</p>
+                                <input type="number" min="0" max="${Number(answer.marks || 0)}" step="0.01" placeholder="Enter marks" id="writtenMark_${result.id}_${index}">
+                                <button type="button" data-action="evaluate-written" data-result-id="${result.id}" data-answer-index="${index}" style="background:#16a34a; color:white; border:none; padding:8px 14px; border-radius:6px; cursor:pointer; margin-top:8px;">Save Evaluation</button>
+                            ` : `
+                                <p><strong>Correct Answer:</strong> ${escapeHTML(answer.correct || "")}</p>
+                            `}
+                        </div>
+                    `;
+                }).join("")}
+            </div>
+        `;
+    }).join("");
+
+    container.onclick = async function(event) {
+        const button = event.target.closest('button[data-action="evaluate-written"]');
+        if (!button) return;
+
+        const resultId = button.dataset.resultId;
+        const answerIndex = Number(button.dataset.answerIndex);
+
+        try {
+            const resultSnapshot = await adminDb.collection("results").where("id", "==", Number(resultId)).get();
+            if (resultSnapshot.empty) {
+                alert("Result not found in Firebase!");
+                return;
+            }
+
+           const resultDoc = resultSnapshot.docs[0];
+            const result = resultDoc.data();
+            const answer = result.answers?.[answerIndex];
+
+            if (!answer || answer.type !== "written") return;
+
+            const input = document.getElementById(`writtenMark_${resultId}_${answerIndex}`);
+            if (!input) {
+                alert("Marks input not found!");
+                return;
+            }
+
+            const marks = Number(input.value);
+            const maximumMarks = Number(answer.marks);
+
+            if (input.value.trim() === "" || !Number.isFinite(marks) || marks < 0 || marks > maximumMarks) {
+                alert("Please enter valid marks within the maximum marks.");
+                return;
+            }
+
+            const evaluations = result.writtenEvaluations || {};
+            evaluations[answerIndex] = marks;
+            const writtenMarks = Object.values(evaluations).reduce((sum, value) => sum + Number(value || 0), 0);
+            const finalMarks = Number(result.obtainedMarks || 0) + writtenMarks;
+
+            await resultDoc.ref.update({
+                writtenEvaluations: evaluations,
+                finalMarks: finalMarks
+            });
+
+            alert("Written answer evaluated successfully!");
+            await renderResults();
+        } catch (error) {
+            console.error("WRITTEN EVALUATION ERROR:", error);
+            alert("Unable to save written marks: " + error.message);
+        }
+    };
+}
+
+function updateSelectedResultCount() {
+    const checkboxes = document.querySelectorAll(".result-select-checkbox:checked");
+    const countElement = document.getElementById("selectedResultCount");
+    if (countElement) {
+        countElement.textContent = "Selected Results: " + checkboxes.length;
+    }
+}
+
+function selectAllResults(select) {
+    const checkboxes = document.querySelectorAll(".result-select-checkbox");
+    checkboxes.forEach(checkbox => { checkbox.checked = select; });
+    updateSelectedResultCount();
+}
+
+async function deleteSelectedResults() {
+    const selectedCheckboxes = document.querySelectorAll(".result-select-checkbox:checked");
+    const selectedIds = Array.from(selectedCheckboxes).map(checkbox => String(checkbox.value));
+
+    if (selectedIds.length === 0) {
+        alert("Please select at least one result.");
+        return;
+    }
+
+    if (!confirm("Are you sure you want to delete " + selectedIds.length + " selected result(s)?")) return;
+
+    try {
+        const resultSnapshot = await adminDb.collection("results").get();
+        const selectedDocs = resultSnapshot.docs.filter(doc => Boolean(doc.data().courseId) && selectedIds.includes(String(doc.data().id)));
+        if (selectedDocs.length === 0) {
+            alert("Selected results not found!");
+            return;
+        }
+
+        const batch = adminDb.batch();
+        selectedDocs.forEach(doc => { batch.delete(doc.ref); });
+        await batch.commit();
+
+        alert("Selected results deleted successfully!");
+        await renderResults();
+    } catch (error) {
+        console.error("BULK DELETE ERROR:", error);
+        alert("Unable to delete selected results: " + error.message);
+    }
+}
+
+async function deleteAllResults() {
+    try {
+        const snapshot = await adminDb.collection("results").get();
+        if (snapshot.empty) {
+            alert("No results available to delete.");
+            return;
+        }
+
+        const docs = snapshot.docs.filter(doc => Boolean(doc.data().courseId));
+        const totalResults = docs.length;
+        if (totalResults === 0) {
+            alert("No Course-Based results available to delete.");
+            return;
+        }
+        if (!confirm("WARNING!\n\nAre you sure you want to DELETE ALL " + totalResults + " Course-Based results?\n\nLegacy results will remain untouched.")) return;
+
+        for (let i = 0; i < docs.length; i += 500) {
+            const batch = adminDb.batch();
+            docs.slice(i, i + 500).forEach(doc => { batch.delete(doc.ref); });
+            await batch.commit();
+        }
+
+        alert("All examination results deleted successfully!");
+        await renderResults();
+    } catch (error) {
+        console.error("DELETE ALL RESULTS ERROR:", error);
+        alert("Unable to delete results: " + error.message);
+    }
+}
+
+function printResults() {
+    document.body.classList.add("printing-results");
+    window.print();
+    window.addEventListener("afterprint", function() {
+        document.body.classList.remove("printing-results");
+    }, { once: true });
+}
+
+async function editResult(resultId) {
+    try {
+        const resultSnapshot = await adminDb.collection("results").where("id", "==", Number(resultId)).get();
+        const courseResultDocs = resultSnapshot.docs.filter(doc => Boolean(doc.data().courseId));
+        if (courseResultDocs.length === 0) {
+            alert("Course-Based result not found!");
+            return;
+        }
+
+        const resultDoc = courseResultDocs[0];
+        const result = resultDoc.data();
+        const newMarks = prompt("Enter new MCQ Marks:", result.obtainedMarks);
+        if (newMarks === null) return;
+
+        const marks = Number(newMarks);
+        if (newMarks.trim() === "" || !Number.isFinite(marks) || marks < 0 || marks > Number(result.totalMarks)) {
+            alert("Please enter valid marks.");
+            return;
+        }
+
+        const writtenMarks = Object.values(result.writtenEvaluations || {}).reduce((sum, value) => sum + Number(value || 0), 0);
+        await resultDoc.ref.update({
+            obtainedMarks: marks,
+            finalMarks: marks + writtenMarks
+        });
+
+        alert("Result updated successfully!");
+        await renderResults();
+    } catch (error) {
+        console.error("RESULT EDIT ERROR:", error);
+        alert("Unable to update result: " + error.message);
+    }
+}
+
+async function deleteResult(resultId) {
+    if (!confirm("Are you sure you want to permanently delete this result?")) return;
+
+    try {
+        const resultSnapshot = await adminDb.collection("results").where("id", "==", Number(resultId)).get();
+        const courseResultDocs = resultSnapshot.docs.filter(doc => Boolean(doc.data().courseId));
+        if (courseResultDocs.length === 0) {
+            alert("Course-Based result not found!");
+            return;
+        }
+
+        const batch = adminDb.batch();
+        courseResultDocs.forEach(doc => { batch.delete(doc.ref); });
+        await batch.commit();
+
+        alert("Result deleted successfully!");
+        await renderResults();
+    } catch (error) {
+        console.error("RESULT DELETE ERROR:", error);
+        alert("Unable to delete result: " + error.message);
+    }
+}
+
+function resetResultFilters() {
+    const searchInput = document.getElementById("resultSearch");
+    const examFilter = document.getElementById("resultExamFilter");
+    if (searchInput) searchInput.value = "";
+    if (examFilter) examFilter.value = "";
+    renderResults();
+}
+
+async function exportResultsCSV() {
+    try {
+        const snapshot = await adminDb.collection("results").get();
+        const results = snapshot.docs.map(doc => doc.data()).filter(result => Boolean(result.courseId));
+
+        if (results.length === 0) {
+            alert("No results available to export.");
+            return;
+        }
+
+        const headers = ["Student ID", "Student Name", "Student Email", "Exam Name", "Date", "Correct Answers", "Wrong Answers", "Attempted", "MCQ Marks", "Written Marks", "Final Marks", "Total Marks"];
+        const rows = results.map(result => {
+            const writtenMarks = Object.values(result.writtenEvaluations || {}).reduce((sum, value) => sum + Number(value || 0), 0);
+            const finalMarks = Number(result.obtainedMarks || 0) + writtenMarks;
+            return [result.studentId, result.studentName, result.studentEmail, result.examName, result.date, result.correct, result.wrong, result.attempted, result.obtainedMarks, writtenMarks, finalMarks, result.totalMarks];
+        });
+
+        const csvContent = [headers, ...rows].map(row => row.map(value => `"${String(value ?? "").replace(/"/g, '""')}"`).join(",")).join("\r\n");
+        const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "RIKON_Exam_Results.csv";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        alert("Results exported successfully!");
+    } catch (error) {
+        console.error("CSV EXPORT ERROR:", error);
+        alert("Unable to export results: " + error.message);
+    }
+}
+
+async function backupAllData() {
+    try {
+        alert("Firebase backup is starting...");
+        const collections = ["exams", "questions", "results", "students", "notices", "payments", "paymentSettings", "courses", "coupons", "helpline", "helplineSettings"];
+        const backupData = {};
+
+        for (const collectionName of collections) {
+            const snapshot = await adminDb.collection(collectionName).get();
+            backupData[collectionName] = snapshot.docs.map(doc => ({ firestoreId: doc.id, ...doc.data() }));
+        }
+
+        const backup = { appName: "RIKON'S EXAM CENTER", backupDate: new Date().toISOString(), backupSource: "Firebase", data: backupData };
+        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "RIKON_EXAM_CENTER_FIREBASE_BACKUP.json";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        alert("Firebase backup downloaded successfully!");
+    } catch (error) {
+        console.error("FIREBASE BACKUP ERROR:", error);
+        alert("Backup failed: " + error.message);
+    }
+}
+
+async function restoreAllData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        try {
+            const backup = JSON.parse(e.target.result);
+            const allowedCollections = ["exams", "questions", "results", "students", "notices", "payments", "paymentSettings", "courses", "coupons", "helpline", "helplineSettings"];
+
+            if (backup.appName !== "RIKON'S EXAM CENTER" || backup.backupSource !== "Firebase" || !backup.data || typeof backup.data !== "object") {
+                throw new Error("Invalid Firebase backup file!");
+            }
+
+            const confirmed = confirm("WARNING!\n\nRestore all Firebase collections?\n\nExisting data will be replaced.\n\nA safety backup will be downloaded first.");
+            if (!confirmed) return;
+
+            // Safety backup
+            const currentData = {};
+            for (const name of allowedCollections) {
+                const snapshot = await adminDb.collection(name).get();
+                currentData[name] = snapshot.docs.map(doc => ({ ...doc.data(), firestoreId: doc.id }));
+            }
+            const safetyBlob = new Blob([JSON.stringify({ appName: "RIKON'S EXAM CENTER", backupDate: new Date().toISOString(), backupSource: "Firebase", data: currentData }, null, 2)], { type: "application/json" });
+            const safetyUrl = URL.createObjectURL(safetyBlob);
+            const safetyLink = document.createElement("a");
+            safetyLink.href = safetyUrl;
+            safetyLink.download = "RIKON_BEFORE_RESTORE_BACKUP.json";
+            document.body.appendChild(safetyLink);
+            safetyLink.click();
+            document.body.removeChild(safetyLink);
+            URL.revokeObjectURL(safetyUrl);
+
+            for (const name of allowedCollections) {
+                if (!backup.data[name]) continue;
+                const collection = adminDb.collection(name);
+                const existing = await collection.get();
+
+                for (let i = 0; i < existing.docs.length; i += 500) {
+                    const batch = adminDb.batch();
+                    existing.docs.slice(i, i + 500).forEach(doc => { batch.delete(doc.ref); });
+                    await batch.commit();
+                }
+
+                const documents = backup.data[name];
+                for (let i = 0; i < documents.length; i += 500) {
+                    const batch = adminDb.batch();
+                    documents.slice(i, i + 500).forEach(item => {
+                        const data = { ...item };
+                        delete data.firestoreId;
+                        batch.set(collection.doc(item.firestoreId), data);
+                    });
+                    await batch.commit();
+                }
+            }
+
+            alert("Firebase backup restored successfully! The page will reload.");
+            location.reload();
+        } catch (error) {
+            console.error("FIREBASE RESTORE ERROR:", error);
+            alert("Restore failed: " + error.message);
+        }
+    };
+    reader.readAsText(file);
+    event.target.value = "";
+}
+
+async function renderAnalytics() {
+    try {
+        const [studentSnapshot, resultSnapshot] = await Promise.all([
+            adminDb.collection("students").get(),
+            adminDb.collection("results").get()
+        ]);
+        const courseResults = resultSnapshot.docs
+            .map(doc => doc.data())
+            .filter(result => Boolean(result.courseId));
+        const performances = courseResults.map(result => {
+            const writtenMarks = Object.values(result.writtenEvaluations || {})
+                .reduce((sum, value) => sum + (Number(value) || 0), 0);
+            const obtainedMarks = Number(result.obtainedMarks || 0) + writtenMarks;
+            const totalMarks = Number(result.totalMarks || 0);
+            if (totalMarks <= 0) return null;
+            return {
+                name: result.studentName || "Unknown Student",
+                id: result.studentId || "N/A",
+                percentage: (obtainedMarks / totalMarks) * 100
+            };
+        }).filter(Boolean);
+        const average = performances.length
+            ? performances.reduce((sum, item) => sum + item.percentage, 0) / performances.length : 0;
+        const highest = performances.length
+            ? Math.max(...performances.map(item => item.percentage)) : 0;
+        document.getElementById("analyticsStudents").textContent = studentSnapshot.size;
+        document.getElementById("analyticsResults").textContent = courseResults.length;
+        document.getElementById("analyticsAverage").textContent = average.toFixed(1) + "%";
+        document.getElementById("analyticsHighest").textContent = highest.toFixed(1) + "%";
+    } catch (error) {
+        console.error("FIREBASE ANALYTICS ERROR:", error);
+    }
+}
+
+async function savePaymentSettings() {
+    const bkash = document.getElementById("adminBkashNumber").value.trim();
+    const nagad = document.getElementById("adminNagadNumber").value.trim();
+    const rocket = document.getElementById("adminRocketNumber").value.trim();
+
+    if (!bkash && !nagad && !rocket) {
+        alert("Please enter at least one payment number.");
+        return;
+    }
+
+    try {
+        await adminDb.collection("paymentSettings").doc("default").set({ bkash, nagad, rocket });
+        alert("Payment settings saved successfully!");
+    } catch (error) {
+        console.error("PAYMENT SETTINGS SAVE ERROR:", error);
+        alert("Unable to save payment settings: " + error.message);
+    }
+}
+
+async function loadPaymentSettings() {
+    try {
+        const settingsDoc = await adminDb.collection("paymentSettings").doc("default").get();
+        const settings = settingsDoc.exists ? settingsDoc.data() : {};
+        document.getElementById("adminBkashNumber").value = settings.bkash || "";
+        document.getElementById("adminNagadNumber").value = settings.nagad || "";
+        document.getElementById("adminRocketNumber").value = settings.rocket || "";
+    } catch (error) {
+        console.error("PAYMENT SETTINGS LOAD ERROR:", error);
+    }
+}
+
+async function renderPayments() {
+    const container = document.getElementById("paymentList");
+    if (!container) return;
+    container.innerHTML = "<p>Loading payments...</p>";
+
+    try {
+        const snapshot = await adminDb.collection("payments").get();
+        const payments = snapshot.docs
+            .map(doc => ({ ...doc.data(), firestoreId: doc.id }))
+            .filter(payment => Boolean(payment.courseId))
+            .sort((a, b) => Number(b.id || 0) - Number(a.id || 0));
+
+        const total = payments.length;
+        const pending = payments.filter(p => p.status === "pending").length;
+        const approved = payments.filter(p => p.status === "approved").length;
+        const rejected = payments.filter(p => p.status === "rejected").length;
+        const revenue = payments.filter(p => p.status === "approved").reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
+        document.getElementById("totalPayments").textContent = total;
+        document.getElementById("pendingPayments").textContent = pending;
+        document.getElementById("approvedPayments").textContent = approved;
+        document.getElementById("rejectedPayments").textContent = rejected;
+        document.getElementById("totalRevenue").textContent = "৳" + revenue.toLocaleString("en-BD");
+
+        if (payments.length === 0) {
+            container.innerHTML = "<p>No payment submissions available.</p>";
+            return;
+        }
+
+        container.innerHTML = payments.map(payment => `
+            <div class="question-item" style="margin-top:15px;">
+                <h3>${escapeHTML(payment.studentName || "Unknown Student")}</h3>
+                <p><strong>Student ID:</strong> ${escapeHTML(payment.studentId || "")}</p>
+                <p><strong>Exam / Course:</strong> ${escapeHTML(payment.examName || "")}</p>
+                ${payment.paymentType === "subscription" ? `
+    <p><strong>Payment Type:</strong> Course Subscription</p>
+    <p><strong>Subscription Plan:</strong> ${escapeHTML(payment.subscriptionPlanName || "")}</p>
+    <p><strong>Duration:</strong> ${Number(payment.durationDays || 0)} Days</p>
+` : ""}
+                <p><strong>Amount:</strong> ৳${Number(payment.amount || 0)}</p>
+                <p><strong>Method:</strong> ${escapeHTML(payment.method || "")}</p>
+                <p><strong>Sender Number:</strong> ${escapeHTML(payment.senderNumber || "")}</p>
+                <p><strong>Transaction ID:</strong> ${escapeHTML(payment.transactionId || "")}</p>
+                <p><strong>Date:</strong> ${escapeHTML(payment.date || "")}</p>
+                <p><strong>Status:</strong> <span style="font-weight:bold; color:${payment.status === 'approved' ? '#16a34a' : payment.status === 'rejected' ? '#dc2626' : '#d97706'}">${escapeHTML(payment.status || "pending").toUpperCase()}</span></p>
+
+                ${payment.status === "pending" ? `
+                    <div style="margin-top:10px;">
+                        <button type="button" onclick="updatePaymentStatus('${payment.firestoreId}', 'approved')" style="background:#16a34a; color:white; border:none; padding:8px 14px; border-radius:6px; cursor:pointer; margin-right:5px;">Approve</button>
+                        <button type="button" onclick="updatePaymentStatus('${payment.firestoreId}', 'rejected')" style="background:#dc2626; color:white; border:none; padding:8px 14px; border-radius:6px; cursor:pointer;">Reject</button>
+                    </div>
+                ` : ""}
+            </div>
+        `).join("");
+    } catch (error) {
+        console.error("FIREBASE PAYMENT LOADING ERROR:", error);
+        container.innerHTML = `<p>Unable to load payments: ${escapeHTML(error.message)}</p>`;
+    }
+}
+
+async function activateStudentSubscription(payment, paymentId) {
+    const planRef = adminDb
+        .collection("courses")
+        .doc(payment.courseId)
+        .collection("subscriptionPlans")
+        .doc(payment.subscriptionPlanId);
+
+    const planDoc = await planRef.get();
+
+    if (!planDoc.exists) {
+        throw new Error("Subscription plan not found.");
+    }
+
+    const plan = planDoc.data();
+
+    if (plan.status !== "active") {
+        throw new Error("This subscription plan is no longer active.");
+    }
+
+    const durationDays = Number(plan.durationDays);
+
+    if (!Number.isFinite(durationDays) || durationDays <= 0) {
+        throw new Error("Invalid subscription duration.");
+    }
+
+    const startAt = Date.now();
+    const expiresAt = startAt + (durationDays * 24 * 60 * 60 * 1000);
+
+    const subscriptionRef = adminDb
+        .collection("students")
+        .doc(payment.studentId)
+        .collection("subscriptions")
+        .doc(String(paymentId));
+
+    await subscriptionRef.set({
+        id: String(paymentId),
+        studentId: payment.studentId,
+        courseId: payment.courseId,
+        courseName: payment.courseName || "",
+        planId: payment.subscriptionPlanId,
+        planName: payment.subscriptionPlanName || plan.name,
+        durationDays: durationDays,
+        amount: Number(payment.amount || 0),
+        status: "active",
+        startAt: startAt,
+        expiresAt: expiresAt,
+        createdAt: startAt
+    });
+}
+
+async function updatePaymentStatus(paymentId, newStatus) {
+    if (!confirm(`Are you sure you want to ${newStatus} this payment?`)) return;
+
+    try {
+        
+const paymentRef = adminDb.collection("payments").doc(String(paymentId));
+
+const paymentDoc = await paymentRef.get();
+
+if (!paymentDoc.exists) {
+    throw new Error("Payment record not found.");
+}
+
+const payment = paymentDoc.data();
+
+if (newStatus === "approved" && payment.paymentType === "subscription") {
+    await activateStudentSubscription(payment, paymentId);
+}
+
+await paymentRef.update({
+    status: newStatus,
+    reviewedAt: Date.now()
+});
+
+        alert(`Payment ${newStatus} successfully!`);
+        await renderPayments();
+    } catch (error) {
+        console.error("PAYMENT STATUS UPDATE ERROR:", error);
+        alert("Unable to update payment: " + error.message);
+    }
+}
+
+async function renderStudentList() {
+    const container = document.getElementById("studentList");
+    const count = document.getElementById("studentCount");
+    const searchInput = document.getElementById("studentSearch");
+    if (!container || !count) return;
+
+    let students = [];
+    try {
+        const studentSnapshot = await adminDb.collection("students").get();
+        students = studentSnapshot.docs.map(doc => ({ ...doc.data(), firestoreId: doc.id }));
+    } catch (error) {
+        console.error("Firebase Student Loading Error:", error);
+        return;
+    }
+
+    count.textContent = students.length;
+    if (searchInput) searchInput.oninput = renderStudentList;
+
+    const searchText = searchInput ? searchInput.value.trim().toLowerCase() : "";
+    const filteredStudents = students.filter(student =>
+        String(student.name || "").toLowerCase().includes(searchText) ||
+        String(student.email || "").toLowerCase().includes(searchText) ||
+        String(student.phone || "").toLowerCase().includes(searchText)
+    );
+
+    if (filteredStudents.length === 0) {
+        container.innerHTML = "<p>No matching students found.</p>";
+        return;
+    }
+
+    container.innerHTML = filteredStudents.map(student => {
+        const blocked = student.status === "blocked";
+        const restricted = Number(student.restrictedUntil) > Date.now();
+
+        return `
+            <div class="question-item" style="margin-top:15px;">
+                <h3>${escapeHTML(student.name || "Unknown Student")}</h3>
+                <p><strong>Student ID:</strong> ${escapeHTML(student.id)}</p>
+                <p><strong>Email:</strong> ${escapeHTML(student.email || "N/A")}</p>
+                <p><strong>Mobile:</strong> ${escapeHTML(student.phone || "N/A")}</p>
+                <p><strong>Status:</strong> ${blocked ? "Blocked" : restricted ? "Temporarily Restricted" : "Active"}</p>
+                <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:15px;">
+                    <button type="button" data-action="${blocked ? "unblock" : "block"}" data-id="${escapeHTML(student.id)}" style="background:${blocked ? "#16a34a" : "#dc2626"}; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer;">${blocked ? "Unblock Student" : "Block Student"}</button>
+                    <button type="button"
+    data-action="${restricted ? "remove-restriction" : "restrict"}"
+    data-id="${escapeHTML(student.id)}"
+    style="background:${restricted ? "#0f766e" : "#d97706"}; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer;">
+    ${restricted ? "Remove Restriction" : "Restrict Student"}
+</button>
+
+                    <button type="button" data-action="delete" data-id="${escapeHTML(student.id)}" style="background:#991b1b; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer;">Delete Student</button>
+                </div>
+            </div>
+        `;
+    }).join("");
+
+    container.onclick = async function(event) {
+        const button = event.target.closest("button[data-action]");
+        if (!button) return;
+        const action = button.dataset.action;
+        const studentId = button.dataset.id;
+
+        try {
+            const studentSnapshot = await adminDb.collection("students").get();
+            const studentDoc = studentSnapshot.docs.find(doc => String(doc.data().id) === String(studentId));
+            if (!studentDoc) return;
+            const student = studentDoc.data();
+
+            if (action === "block") {
+
+    await studentDoc.ref.update({
+        status: "blocked"
+    });
+
+} else if (action === "unblock") {
+
+    await studentDoc.ref.update({
+        status: "active"
+    });
+
+} else if (action === "restrict") {
+
+    const hoursInput = prompt(
+        "Restriction duration in hours:",
+        "1"
+    );
+
+    if (hoursInput === null) return;
+
+    const hours = Number(hoursInput);
+
+    if (!Number.isFinite(hours) || hours <= 0) {
+        alert("Please enter a valid duration.");
+        return;
+    }
+
+    const reason = prompt("Enter restriction reason:");
+
+    if (reason === null) return;
+
+    if (!reason.trim()) {
+        alert("Restriction reason is required.");
+        return;
+    }
+
+    await studentDoc.ref.update({
+        restrictedUntil: Date.now() + (hours * 60 * 60 * 1000),
+        restrictionReason: reason.trim()
+    });
+
+} else if (action === "remove-restriction") {
+
+    if (!confirm("Remove this student's restriction?")) return;
+
+    await studentDoc.ref.update({
+        restrictedUntil: 0,
+        restrictionReason: ""
+    });
+
+} else if (action === "delete") {
+
+    if (!confirm("Permanently delete this student?")) return;
+
+    await studentDoc.ref.delete();
+
+}
+
+await renderStudentList();
+        } catch (error) {
+            console.error("Student Action Failed:", error);
+        }
+    };
+}
+
+async function updateDashboard() {
+   
+    document.getElementById("totalQuestions").textContent = questionList.length;
+    try {
+    const courseSnapshot = await adminDb.collection("courses").get();
+    document.getElementById("totalCourses").textContent = courseSnapshot.size;
+} catch (error) {
+    console.error("Total Courses Loading Error:", error);
+    document.getElementById("totalCourses").textContent = "Error";
+}
+    try {
+        const studentSnapshot = await adminDb.collection("students").get();
+        document.getElementById("totalStudents").textContent = studentSnapshot.size;
+    } catch (error) {
+        document.getElementById("totalStudents").textContent = "Error";
+    }
+    const recent = document.getElementById("recentExams");
+    if (recent) {
+        recent.innerHTML = examList.length
+            ? examList.map(exam => `<p>${escapeHTML(exam.name || exam.title || "Course Exam")} — ${escapeHTML(exam.marks || 0)} Marks</p><br>`).join("")
+            : "No Course-Based exams created yet.";
+    }
+}
+
+async function renderNotices() {
+    const container = document.getElementById("noticeList");
+    if (!container) return;
+
+    try {
+        const snapshot = await adminDb.collection("notices").get();
+        const notices = snapshot.docs.map(doc => ({ ...doc.data(), firestoreId: doc.id }))
+            .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
+
+        if (notices.length === 0) {
+            container.innerHTML = "<p>No notices published yet.</p>";
+            return;
+        }
+
+        container.innerHTML = notices.map(notice => `
+            <div class="content-card" style="margin-top:15px;">
+                <h3>${escapeHTML(notice.title || "")}</h3>
+                <p>${escapeHTML(notice.description || "")}</p>
+                <p><small>${escapeHTML(notice.date || "")}</small></p>
+                <button class="primary-btn" style="background:#dc2626; margin-top:10px;" onclick="deleteNotice('${notice.firestoreId}')">Delete Notice</button>
+            </div>
+        `).join("");
+    } catch (error) {
+        container.innerHTML = "<p>Unable to load notices.</p>";
+    }
+}
+
+document.getElementById("noticeForm").addEventListener("submit", async function(event) {
+    event.preventDefault();
+    const title = document.getElementById("noticeTitle").value.trim();
+    const description = document.getElementById("noticeDescription").value.trim();
+    const priority = document.getElementById("noticePriority").value;
+
+    try {
+        await adminDb.collection("notices").add({
+            title, description, priority, date: new Date().toLocaleString(), createdAt: Date.now()
+        });
+        await renderNotices();
+        document.getElementById("noticeForm").reset();
+        document.getElementById("noticeMessage").textContent = "Notice published successfully!";
+    } catch (error) {
+        document.getElementById("noticeMessage").textContent = "Failed to publish notice.";
+    }
+});
+
+async function deleteNotice(id) {
+    if (!confirm("Are you sure?")) return;
+    try {
+        await adminDb.collection("notices").doc(id).delete();
+        await renderNotices();
+    } catch (error) {
+        alert("Failed to delete notice.");
+    }
+}
+
+// 쿠폰 ম্যানেজমেন্ট ফাংশনসমূহ
+let editingCouponCode = null;
+
+async function saveNewCoupon(event) {
+    event.preventDefault();
+
+    const code = document.getElementById("couponCode").value.trim().toUpperCase();
+    const scope = document.getElementById("couponScope").value;
+    const type = document.getElementById("couponType").value;
+    const value = Number(document.getElementById("couponValue").value);
+
+    const courseId = document.getElementById("couponCourseId").value;
+    const studentId = document.getElementById("couponStudentId").value.trim();
+
+    const msg = document.getElementById("couponCreateMsg");
+
+    if (!code || !value || value <= 0) {
+        msg.style.color = "red";
+        msg.textContent = "Please enter valid coupon information.";
+        return;
+    }
+
+    if (type === "percentage" && value > 100) {
+        msg.style.color = "red";
+        msg.textContent = "Percentage discount cannot exceed 100%.";
+        return;
+    }
+
+    if (scope === "course" && !courseId) {
+        msg.style.color = "red";
+        msg.textContent = "Please select a course.";
+        return;
+    }
+
+    if (scope === "student" && !studentId) {
+        msg.style.color = "red";
+        msg.textContent = "Please enter Student ID.";
+        return;
+    }
+
+    const couponData = {
+        code,
+        scope,
+        discountType: type,
+        discountValue: value,
+        courseId: (scope === "course" || (scope === "student" && courseId)) ? courseId : null,
+        studentId: scope === "student" ? studentId : null,
+        updatedAt: Date.now()
+    };
+
+    try {
+        const couponRef = adminDb.collection("coupons").doc(
+            editingCouponCode || code
+        );
+
+        if (editingCouponCode) {
+            await couponRef.set(couponData, { merge: true });
+            msg.style.color = "green";
+            msg.textContent = "Coupon updated successfully!";
+        } else {
+            const existingCoupon = await couponRef.get();
+
+            if (existingCoupon.exists) {
+                msg.style.color = "red";
+                msg.textContent = "This coupon code already exists.";
+                return;
+            }
+
+            couponData.status = "active";
+            couponData.createdAt = Date.now();
+
+            await couponRef.set(couponData);
+
+            msg.style.color = "green";
+            msg.textContent = "Coupon created successfully!";
+        }
+
+        editingCouponCode = null;
+
+        document.getElementById("createCouponForm").reset();
+        document.getElementById("couponCode").disabled = false;
+        document.getElementById("couponSubmitBtn").textContent = "Create Coupon";
+        document.getElementById("cancelCouponEditBtn").style.display = "none";
+
+        document.getElementById("couponScope").dispatchEvent(new Event("change"));
+
+        loadAdminCouponsList();
+
+    } catch (error) {
+        console.error("Coupon save error:", error);
+        msg.style.color = "red";
+        msg.textContent = "Failed to save coupon.";
+    }
+}
+
+
+async function loadAdminCouponsList() {
+    const container = document.getElementById("adminCouponsList");
+    if (!container) return;
+
+    try {
+        const [couponSnapshot, courseSnapshot] = await Promise.all([
+            adminDb.collection("coupons").get(),
+            adminDb.collection("courses").get()
+        ]);
+
+        const courseNames = {};
+
+        courseSnapshot.docs.forEach(doc => {
+            const course = doc.data();
+            courseNames[course.id || doc.id] = course.title || "Unknown Course";
+        });
+
+        const coupons = couponSnapshot.docs.map(doc => ({
+            ...doc.data(),
+            code: doc.data().code || doc.id
+        }));
+
+        if (coupons.length === 0) {
+            container.innerHTML = "<p>No coupons created yet.</p>";
+            return;
+        }
+
+        container.innerHTML = coupons.map(coupon => {
+            let scopeText = "Legacy Coupon";
+
+            if (coupon.scope === "global") {
+                scopeText = "Global Coupon";
+            } else if (coupon.scope === "course") {
+                scopeText = "Course-Specific Coupon";
+            } else if (coupon.scope === "student") {
+                scopeText = "Individual Student Coupon";
+            }
+
+            let targetText = "All students and courses";
+
+            if (coupon.scope === "course") {
+                targetText = courseNames[coupon.courseId] || "Unknown Course";
+            }
+
+            if (coupon.scope === "student") {
+                targetText = "Student ID: " + (coupon.studentId || "Unknown");
+
+                if (coupon.courseId) {
+                    targetText += " | Course: " +
+                        (courseNames[coupon.courseId] || "Unknown Course");
+                }
+            }
+
+            return `
+                <div class="question-item" style="margin-top:15px; display:flex; justify-content:space-between; align-items:center; gap:15px;">
+                    <div>
+                        <h3 style="margin:0 0 5px; color:#2563eb;">
+                            ${escapeHTML(coupon.code)}
+                        </h3>
+
+                        <p style="margin:0; color:#475569;">
+                            ${escapeHTML(scopeText)}
+                        </p>
+
+                        <p style="margin:4px 0; color:#475569;">
+                            Target: ${escapeHTML(targetText)}
+                        </p>
+
+                        <p style="margin:0; color:#475569;">
+                            Discount:
+                            <strong>
+                                ${coupon.discountValue}${coupon.discountType === "percentage" ? "%" : "৳"}
+                            </strong>
+                            | Status: <strong>${escapeHTML(coupon.status || "active")}</strong>
+                        </p>
+                    </div>
+
+                    <div style="display:flex; gap:8px; flex-shrink:0;">
+    <button type="button"
+        onclick="editAdminCoupon('${escapeHTML(coupon.code)}')"
+        style="background:#2563eb; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">
+        Edit
+    </button>
+
+    <button type="button"
+        onclick="deleteAdminCoupon('${escapeHTML(coupon.code)}')"
+        style="background:#dc2626; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">
+        Delete
+    </button>
+</div>
+                </div>
+            `;
+        }).join("");
+
+    } catch (error) {
+        console.error("Error loading coupons:", error);
+        container.innerHTML = "<p>Unable to load coupons list.</p>";
+    }
+}
+async function editAdminCoupon(code) {
+    try {
+        const doc = await adminDb.collection("coupons").doc(code).get();
+
+        if (!doc.exists) {
+            alert("Coupon not found!");
+            return;
+        }
+
+        const coupon = doc.data();
+if (!editingCouponCode) {
+    adminPageHistory.push("coupon-edit");
+    document.getElementById("backNavigationBtn").style.display = "inline-flex";
+}
+        editingCouponCode = code;
+
+        document.getElementById("couponCode").value = code;
+        document.getElementById("couponCode").disabled = true;
+
+        document.getElementById("couponScope").value = coupon.scope || "global";
+        document.getElementById("couponScope").dispatchEvent(new Event("change"));
+
+        document.getElementById("couponType").value = coupon.discountType || "percentage";
+        document.getElementById("couponValue").value = coupon.discountValue || "";
+
+        document.getElementById("couponCourseId").value = coupon.courseId || "";
+        document.getElementById("couponStudentId").value = coupon.studentId || "";
+
+        document.getElementById("couponSubmitBtn").textContent = "Update Coupon";
+        document.getElementById("cancelCouponEditBtn").style.display = "block";
+
+        document.getElementById("couponCreateMsg").textContent = "Editing coupon: " + code;
+
+        document.getElementById("createCouponForm").scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+        });
+
+    } catch (error) {
+        console.error("Coupon edit error:", error);
+        alert("Failed to load coupon information.");
+    }
+}
+
+
+function cancelCouponEdit() {
+    editingCouponCode = null;
+
+    document.getElementById("createCouponForm").reset();
+    document.getElementById("couponCode").disabled = false;
+
+    document.getElementById("couponSubmitBtn").textContent = "Create Coupon";
+    document.getElementById("cancelCouponEditBtn").style.display = "none";
+    document.getElementById("couponCreateMsg").textContent = "";
+
+    document.getElementById("couponScope").dispatchEvent(new Event("change"));
+}
+async function deleteAdminCoupon(code) {
+    if (!confirm("Are you sure?")) return;
+    try {
+        await adminDb.collection("coupons").doc(code).delete();
+        loadAdminCouponsList();
+    } catch (error) {
+        alert("Failed to delete coupon.");
+    }
+}
+
+// হেল্পলাইন ম্যানেজমেন্ট
+async function renderAdminHelpline() {
+    loadAdminHelplineSettings();
+    renderAdminSupportTickets();
+}
+
+
+async function loadAdminHelplineSettings() {
+    try {
+        const doc = await adminDb.collection("helplineSettings")
+            .doc("contactInfo").get();
+
+        if (doc.exists) {
+            const data = doc.data();
+
+            document.getElementById("adminHelpPhone").value = data.phone || "";
+            document.getElementById("adminHelpEmail").value = data.email || "";
+            document.getElementById("adminHelpTelegram").value = data.telegram || "";
+            document.getElementById("adminHelpWhatsApp").value = data.whatsapp || "";
+            document.getElementById("adminHelpWhatsAppGroup").value = data.whatsappGroup || "";
+            document.getElementById("adminHelpHours").value = data.hours || "";
+            document.getElementById("adminHelpNotice").value = data.notice || "";
+        }
+    } catch (error) {
+        console.error("Helpline settings load error:", error);
+    }
+}
+
+
+async function saveHelplineSettings(event) {
+    event.preventDefault();
+
+    const phone = document.getElementById("adminHelpPhone").value.trim();
+    const email = document.getElementById("adminHelpEmail").value.trim();
+    const telegram = document.getElementById("adminHelpTelegram").value.trim();
+    const whatsapp = document.getElementById("adminHelpWhatsApp").value.trim();
+    const whatsappGroup = document.getElementById("adminHelpWhatsAppGroup").value.trim();
+    const hours = document.getElementById("adminHelpHours").value.trim();
+    const notice = document.getElementById("adminHelpNotice").value.trim();
+
+    const msg = document.getElementById("settingsSaveMsg");
+
+    try {
+        await adminDb.collection("helplineSettings")
+            .doc("contactInfo")
+            .set({
+                phone,
+                email,
+                telegram,
+                whatsapp,
+                whatsappGroup,
+                hours,
+                notice
+            }, { merge: true });
+
+        msg.style.color = "green";
+        msg.textContent = "Helpline settings updated successfully!";
+
+    } catch (error) {
+        console.error("Helpline settings save error:", error);
+
+        msg.style.color = "red";
+        msg.textContent = "Failed to update settings.";
+    }
+}
+async function renderAdminSupportTickets() {
+    const container = document.getElementById("adminHelplineList");
+    if (!container) return;
+
+    try {
+        const snapshot = await adminDb.collection("helpline").get();
+        const tickets = snapshot.docs.map(doc => ({ ...doc.data(), firestoreId: doc.id }))
+            .sort((a, b) => b.createdAt - a.createdAt);
+
+        if (tickets.length === 0) {
+            container.innerHTML = "<p>No support tickets available.</p>";
+            return;
+        }
+
+        container.innerHTML = tickets.map(ticket => `
+            <div class="question-item" style="margin-top:15px; border-left:5px solid ${ticket.status === 'Resolved' ? '#16a34a' : '#d97706'};">
+                <h3>${escapeHTML(ticket.subject)}</h3>
+                <p><strong>Student:</strong> ${escapeHTML(ticket.studentName)} (${escapeHTML(ticket.studentEmail)})</p>
+                <p><strong>Message:</strong> ${escapeHTML(ticket.message)}</p>
+                <p><strong>Status:</strong> <span style="font-weight:bold; color:${ticket.status === 'Resolved' ? '#16a34a' : '#d97706'};">${escapeHTML(ticket.status)}</span></p>
+                <div style="margin-top:12px;">
+                    <textarea id="adminReply_${ticket.firestoreId}" rows="2" placeholder="Write a reply..." style="width:100%; box-sizing:border-box; margin-bottom:8px;">${escapeHTML(ticket.adminReply || "")}</textarea>
+                    <button type="button" onclick="sendAdminReply('${ticket.firestoreId}', 'Resolved')" style="background:#16a34a; color:white; border:none; padding:8px 14px; border-radius:6px; cursor:pointer;">Send Reply & Resolve</button>
+                </div>
+            </div>
+        `).join("");
+    } catch (error) {
+        container.innerHTML = "<p>Unable to load support tickets.</p>";
+    }
+}
+
+async function sendAdminReply(firestoreId, newStatus) {
+    const replyText = document.getElementById(`adminReply_${firestoreId}`).value.trim();
+    if (!replyText) {
+        alert("Please write a reply message.");
+        return;
+    }
+    try {
+        await adminDb.collection("helpline").doc(firestoreId).update({ adminReply: replyText, status: newStatus });
+        alert("Reply sent successfully!");
+        renderAdminSupportTickets();
+    } catch (error) {
+        alert("Failed to send reply.");
+    }
+}
+
+// ফায়ারবেজ অথ সিকিউরিটি চেক
+adminAuth.onAuthStateChanged(async function(user) {
+    if (!user) {
+        window.location.replace("login.html");
+        return;
+    }
+
+    try {
+        const userDoc = await adminDb.collection("users").doc(user.uid).get();
+        if (!userDoc.exists || userDoc.data().status !== "active") {
+            await adminAuth.signOut();
+            window.location.replace("login.html");
+            return;
+        }
+
+        const userData = userDoc.data();
+        await loadFirebaseExamData();
+        updateDashboard();
+        renderNotices();
+
+        document.querySelectorAll(".superadmin-only").forEach(button => {
+            button.style.display = userData.role === "superadmin" ? "" : "none";
+        });
+
+        document.body.style.visibility = "visible";
+    } catch (error) {
+        console.error("Security Error:", error);
+        await adminAuth.signOut();
+        window.location.replace("login.html");
+    }
+});
+let activeCourseId = null;
+let activeCourseTitle = "";
+
+// ১. কোর্স লিস্টে ক্লিক করলে নির্দিষ্ট কোর্সের ড্যাশবোর্ড ওপেন করার ফাংশন (Step 2)
+
+function openCourseDashboard(courseId, courseTitle) {
+    if (currentAdminPage === "courses") {
+        adminPageHistory.push("courses-list");
+    }
+
+    currentCourseTab = "createExam";
+
+    activeCourseId = courseId;
+    activeCourseTitle = courseTitle;
+
+    document.getElementById("mainCoursesContainer").style.display = "none";
+
+    const dashContainer = document.getElementById("specificCourseDashboard");
+    dashContainer.style.display = "block";
+
+    dashContainer.innerHTML = `
+        <div class="content-card" style="background:#eff6ff; border:1px solid #bfdbfe;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h2 style="margin:0; color:#1d4ed8;">Course: ${escapeHTML(courseTitle)}</h2>
+            </div>
+        </div>
+
+        <!-- ট্যাব মেনু -->
+        <div style="display:flex; gap:10px; margin-bottom:20px;">
+            <button type="button" id="tabCreateExamBtn" onclick="switchCourseTab('createExam')" style="background:#2563eb; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer; font-weight:bold;">Create Exam</button>
+            <button type="button" id="tabQuestionBankBtn" onclick="switchCourseTab('questionBank')" style="background:#cbd5e1; color:#1e293b; border:none; padding:10px 20px; border-radius:5px; cursor:pointer; font-weight:bold;">Question Bank</button>
+        </div>
+<button type="button" id="tabSubscriptionBtn"
+    onclick="switchCourseTab('subscriptions')"
+    style="background:#cbd5e1; color:#1e293b; border:none; padding:10px 20px; border-radius:5px; cursor:pointer; font-weight:bold;">
+    💳 Subscription Plans
+</button>
+        <!-- Create Exam Sub-Section -->
+        <div id="courseSubCreateExam" class="content-card">
+            <h2>Create Exam for ${escapeHTML(courseTitle)}</h2>
+
+            <form id="courseExamForm" onsubmit="saveCourseExam(event)">
+                <label>Exam Name</label>
+                <input id="courseExamName" type="text" placeholder="Exam Name" required>
+
+                <label>Exam Date & Time</label>
+                <input id="courseExamDate" type="datetime-local" required>
+
+                <label>Duration (Minutes)</label>
+                <input id="courseExamDuration" type="number" value="30" required>
+
+                <label>Total Marks</label>
+                <input id="courseExamMarks" type="number" value="50" required>
+
+                <label>Negative Mark per Wrong Answer</label>
+                <input id="courseExamNegativeMark" type="number" step="0.01" value="0" placeholder="0 for no negative mark">
+
+                <button class="primary-btn" type="submit" style="margin-top:15px;">Create Exam</button>
+            </form>
+
+            <p id="courseExamMsg" style="margin-top:10px;"></p>
+            <div id="courseExamsList" style="margin-top:20px;"></div>
+        </div>
+
+        <!-- Question Bank Sub-Section -->
+        <div id="courseSubQuestionBank" class="content-card" style="display:none;">
+            <h2>Question Bank for ${escapeHTML(courseTitle)}</h2>
+
+            <form id="courseQuestionForm" onsubmit="saveCourseQuestion(event)">
+                <label>Select Exam</label>
+                <select id="courseQuestionExamSelect" required>
+                    <option value="">Select an exam</option>
+                </select>
+
+                <label>Question Type</label>
+                <select id="courseQType" onchange="toggleQuestionFields(this.value)" required>
+                    <option value="mcq">MCQ (Multiple Choice)</option>
+                    <option value="written">Written / Descriptive</option>
+                </select>
+
+                <label>Question Text</label>
+                <textarea id="courseQText" rows="3" required></textarea>
+
+                <!-- MCQ Fields Container -->
+                <div id="mcqFieldsContainer">
+                    <label>Option A</label>
+                    <input id="courseOptA" required>
+
+                    <label>Option B</label>
+                    <input id="courseOptB" required>
+
+                    <label>Option C</label>
+                    <input id="courseOptC" required>
+
+                    <label>Option D</label>
+                    <input id="courseOptD" required>
+
+                    <label>Correct Answer</label>
+                    <select id="courseCorrectOpt" required>
+                        <option value="">Select</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                    </select>
+                </div>
+
+                <label style="margin-top:10px; display:block;">Marks</label>
+                <input id="courseQMarks" type="number" value="1" required>
+
+                <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:15px;">
+
+    <button type="button" class="primary-btn"
+        onclick="addQuestionToDraft()">
+        + Add More
+    </button>
+
+    <button type="button" class="primary-btn"
+        onclick="previewAllCourseQuestions()"
+        style="background:#7c3aed;">
+        Preview All Questions
+    </button>
+
+    <button type="button" class="primary-btn"
+        onclick="saveAllCourseQuestions()"
+        style="background:#16a34a;">
+        Save All Questions
+    </button>
+<button type="button" id="updateSavedQuestionBtn"
+    class="primary-btn"
+    onclick="updateSavedCourseQuestion()"
+    style="background:#2563eb; display:none;">
+    Update Question
+</button>
+</div>
+            </form>
+
+            <p id="courseQMsg" style="margin-top:10px;"></p>
+
+<div id="courseQuestionPreview"
+     style="margin-top:20px; display:none;">
+</div>
+
+<div id="courseQuestionsList" style="margin-top:20px;"></div>
+        </div>
+                        <div id="courseSubSubscriptions" style="display:none;">
+
+    <h3 style="margin-bottom:15px;">💳 Subscription Plans Management</h3>
+
+    <div style="background:#f8fafc; padding:20px; border-radius:10px; margin-bottom:20px;">
+
+        <h4 style="margin-top:0;">Create New Subscription Plan</h4>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px;">
+
+            <div>
+                <label>Plan Name</label>
+                <input type="text" id="subscriptionPlanName"
+                    placeholder="e.g. Monthly Plan">
+            </div>
+
+            <div>
+                <label>Duration (Days)</label>
+                <input type="number" id="subscriptionPlanDuration"
+                    placeholder="e.g. 30" min="1">
+            </div>
+
+            <div>
+                <label>Price (৳)</label>
+                <input type="number" id="subscriptionPlanPrice"
+                    placeholder="e.g. 500" min="0">
+            </div>
+
+        </div>
+
+        <button type="button" id="saveSubscriptionPlanBtn"
+    onclick="saveSubscriptionPlan()"
+            style="margin-top:15px; background:#2563eb; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer;">
+            Create Plan
+        </button>
+
+    </div>
+
+    <div id="subscriptionPlansList">
+        <p style="color:#64748b;">Subscription plans will appear here.</p>
+    </div>
+
+</div>
+    `;
+
+    loadExamsForActiveCourse();
+}
+
+// প্রশ্ন টাইপ পরিবর্তন করার ফাংশন (MCQ সিলেক্ট করলে অপশন দেখাবে, Written সিলেক্ট করলে হাইড করবে)
+function toggleQuestionFields(type) {
+    const mcqContainer = document.getElementById("mcqFieldsContainer");
+    const optA = document.getElementById("courseOptA");
+    const optB = document.getElementById("courseOptB");
+    const optC = document.getElementById("courseOptC");
+    const optD = document.getElementById("courseOptD");
+    const correctOpt = document.getElementById("courseCorrectOpt");
+
+    if (type === "written") {
+        mcqContainer.style.display = "none";
+        optA.removeAttribute("required");
+        optB.removeAttribute("required");
+        optC.removeAttribute("required");
+        optD.removeAttribute("required");
+        correctOpt.removeAttribute("required");
+    } else {
+        mcqContainer.style.display = "block";
+        optA.setAttribute("required", "true");
+        optB.setAttribute("required", "true");
+        optC.setAttribute("required", "true");
+        optD.setAttribute("required", "true");
+        correctOpt.setAttribute("required", "true");
+    }
+}
+
+// এক্সাম সেভ করার ফাংশন (Negative Mark সহ)
+
+let editingCourseExamId = null;
+
+async function saveCourseExam(event) {
+    event.preventDefault();
+
+    const name = document.getElementById("courseExamName").value.trim();
+    const date = document.getElementById("courseExamDate").value;
+    const duration = Number(document.getElementById("courseExamDuration").value);
+    const marks = Number(document.getElementById("courseExamMarks").value);
+    const negativeMark = Number(document.getElementById("courseExamNegativeMark").value);
+    const msg = document.getElementById("courseExamMsg");
+
+    try {
+        msg.style.color = "blue";
+        msg.textContent = editingCourseExamId
+            ? "Updating exam..."
+            : "Creating exam...";
+
+        const isEditing = !!editingCourseExamId;
+        const examId = isEditing
+            ? editingCourseExamId
+            : "exam_" + Date.now();
+
+        const examData = {
+            id: examId,
+            name,
+            category: activeCourseTitle,
+            date,
+            duration,
+            marks,
+            negativeMark,
+            courseId: activeCourseId,
+            ...(isEditing ? {} : { createdAt: Date.now() })
+        };
+
+        await adminDb.collection("exams").doc(examId).set(
+            examData,
+            { merge: true }
+        );
+
+        if (!isEditing) {
+            const courseRef = adminDb.collection("courses").doc(activeCourseId);
+            const doc = await courseRef.get();
+
+            if (doc.exists) {
+                const exams = doc.data().exams || [];
+
+                if (!exams.includes(examId)) {
+                    exams.push(examId);
+                    await courseRef.update({ exams });
+                }
+            }
+        }
+
+        editingCourseExamId = null;
+
+        msg.style.color = "green";
+        msg.textContent = isEditing
+            ? "Exam updated successfully!"
+            : "Exam created successfully!";
+
+        document.getElementById("courseExamForm").reset();
+
+        document.querySelector("#courseExamForm button[type='submit']")
+            .textContent = "Create Exam";
+
+        await loadExamsForActiveCourse();
+
+    } catch (e) {
+        msg.style.color = "red";
+        msg.textContent = "Error: " + e.message;
+        console.error("COURSE EXAM SAVE ERROR:", e);
+    }
+}
+
+
+// প্রশ্ন সেভ করার ফাংশন (MCQ এবং Written উভয় টাইপের জন্য)
+
+function getCourseQuestionFormData() {
+    const form = document.getElementById("courseQuestionForm");
+
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return null;
+    }
+
+    const examId = document.getElementById("courseQuestionExamSelect").value;
+    const type = document.getElementById("courseQType").value;
+
+    const questionData = {
+        draftId: Date.now() + Math.random(),
+        examId,
+        type,
+        text: document.getElementById("courseQText").value.trim(),
+        marks: Number(document.getElementById("courseQMarks").value),
+        createdAt: Date.now()
+    };
+
+    if (type === "mcq") {
+        questionData.A = document.getElementById("courseOptA").value.trim();
+        questionData.B = document.getElementById("courseOptB").value.trim();
+        questionData.C = document.getElementById("courseOptC").value.trim();
+        questionData.D = document.getElementById("courseOptD").value.trim();
+        questionData.correct = document.getElementById("courseCorrectOpt").value;
+    }
+
+    return questionData;
+}
+
+
+function addQuestionToDraft() {
+    const questionData = getCourseQuestionFormData();
+    if (!questionData) return;
+
+    if (
+        draftCourseQuestions.length > 0 &&
+        draftCourseQuestions[0].examId !== questionData.examId
+    ) {
+        alert("আগের Draft Questions Save বা Remove না করে Exam পরিবর্তন করা যাবে না।");
+        return;
+    }
+
+    draftCourseQuestions.push(questionData);
+
+    const msg = document.getElementById("courseQMsg");
+    msg.style.color = "green";
+    msg.textContent = "Question added to Draft! Total: " + draftCourseQuestions.length;
+
+    // পরের প্রশ্নের জন্য ফর্ম পরিষ্কার
+    document.getElementById("courseQText").value = "";
+    document.getElementById("courseOptA").value = "";
+    document.getElementById("courseOptB").value = "";
+    document.getElementById("courseOptC").value = "";
+    document.getElementById("courseOptD").value = "";
+    document.getElementById("courseCorrectOpt").value = "";
+    document.getElementById("courseQMarks").value = "1";
+
+    document.getElementById("courseQType").value = "mcq";
+    toggleQuestionFields("mcq");
+
+    document.getElementById("courseQText").focus();
+}
+
+
+function saveCourseQuestion(event) {
+    event.preventDefault();
+    addQuestionToDraft();
+}
+
+
+
+function previewAllCourseQuestions() {
+    const currentText = document.getElementById("courseQText").value.trim();
+
+    // ফর্মে নতুন প্রশ্ন লেখা থাকলে সেটিও Draft-এ যোগ হবে
+    if (currentText) {
+        const questionData = getCourseQuestionFormData();
+        if (!questionData) return;
+
+        if (
+            draftCourseQuestions.length > 0 &&
+            draftCourseQuestions[0].examId !== questionData.examId
+        ) {
+            alert("একই Exam-এর প্রশ্নগুলো একসঙ্গে রাখতে হবে।");
+            return;
+        }
+
+        draftCourseQuestions.push(questionData);
+
+        document.getElementById("courseQText").value = "";
+        document.getElementById("courseOptA").value = "";
+        document.getElementById("courseOptB").value = "";
+        document.getElementById("courseOptC").value = "";
+        document.getElementById("courseOptD").value = "";
+        document.getElementById("courseCorrectOpt").value = "";
+        document.getElementById("courseQMarks").value = "1";
+        document.getElementById("courseQType").value = "mcq";
+        toggleQuestionFields("mcq");
+    }
+
+    const preview = document.getElementById("courseQuestionPreview");
+    preview.style.display = "block";
+
+    if (draftCourseQuestions.length === 0) {
+        preview.innerHTML = "<p>No draft questions available.</p>";
+        return;
+    }
+
+    preview.innerHTML = `
+        <h3>Draft Questions (${draftCourseQuestions.length})</h3>
+
+        ${draftCourseQuestions.map((q, index) => `
+            <div style="background:#f1f5f9; padding:15px; margin:10px 0; border-radius:8px;">
+
+                <strong>Q${index + 1}. ${escapeHTML(q.text)}</strong>
+
+                <p>Type: ${q.type.toUpperCase()} | Marks: ${q.marks}</p>
+
+                ${q.type === "mcq" ? `
+                    <p>A. ${escapeHTML(q.A)}</p>
+                    <p>B. ${escapeHTML(q.B)}</p>
+                    <p>C. ${escapeHTML(q.C)}</p>
+                    <p>D. ${escapeHTML(q.D)}</p>
+                    <p style="color:green;">Correct Answer: ${escapeHTML(q.correct)}</p>
+                ` : ""}
+
+                <button type="button" class="edit-question-btn"
+                    onclick="editDraftCourseQuestion(${index})">
+                    Edit
+                </button>
+
+                <button type="button" class="delete-question-btn"
+                    onclick="removeDraftCourseQuestion(${index})">
+                    Remove
+                </button>
+
+            </div>
+        `).join("")}
+    `;
+}
+
+
+function editDraftCourseQuestion(index) {
+    const q = draftCourseQuestions[index];
+    if (!q) return;
+
+    document.getElementById("courseQuestionExamSelect").value = q.examId;
+    document.getElementById("courseQType").value = q.type;
+    document.getElementById("courseQText").value = q.text;
+    document.getElementById("courseQMarks").value = q.marks;
+
+    document.getElementById("courseOptA").value = q.A || "";
+    document.getElementById("courseOptB").value = q.B || "";
+    document.getElementById("courseOptC").value = q.C || "";
+    document.getElementById("courseOptD").value = q.D || "";
+    document.getElementById("courseCorrectOpt").value = q.correct || "";
+
+    toggleQuestionFields(q.type);
+
+    draftCourseQuestions.splice(index, 1);
+    previewAllCourseQuestions();
+
+    document.getElementById("courseQText").focus();
+}
+
+
+function removeDraftCourseQuestion(index) {
+    if (!confirm("এই Draft Question টি Remove করতে চান?")) return;
+
+    draftCourseQuestions.splice(index, 1);
+    previewAllCourseQuestions();
+}
+
+async function saveAllCourseQuestions() {
+    const msg = document.getElementById("courseQMsg");
+
+    if (draftCourseQuestions.length === 0) {
+        msg.style.color = "red";
+        msg.textContent = "Save করার মতো কোনো Draft Question নেই!";
+        return;
+    }
+
+    if (draftCourseQuestions.length > 500) {
+        msg.style.color = "red";
+        msg.textContent = "একবারে সর্বোচ্চ 500টি Question Save করা যাবে।";
+        return;
+    }
+
+    const examId = draftCourseQuestions[0].examId;
+
+    if (draftCourseQuestions.some(q => q.examId !== examId)) {
+        msg.style.color = "red";
+        msg.textContent = "Draft Questions-এ একাধিক Exam পাওয়া গেছে!";
+        return;
+    }
+
+    if (!confirm(
+        draftCourseQuestions.length + "টি Question একসঙ্গে Save করতে চান?"
+    )) return;
+
+    try {
+        const batch = adminDb.batch();
+
+        draftCourseQuestions.forEach(q => {
+            const questionRef = adminDb.collection("questions").doc();
+
+            const questionData = { ...q };
+            delete questionData.draftId;
+
+            batch.set(questionRef, questionData);
+        });
+
+        await batch.commit();
+
+        const totalSaved = draftCourseQuestions.length;
+
+        draftCourseQuestions = [];
+
+        document.getElementById("courseQuestionForm").reset();
+        toggleQuestionFields("mcq");
+
+        document.getElementById("courseQuestionPreview").innerHTML = "";
+        document.getElementById("courseQuestionPreview").style.display = "none";
+
+        msg.style.color = "green";
+        msg.textContent = totalSaved + "টি Question সফলভাবে Save হয়েছে!";
+
+        await loadQuestionsForCourseExam(examId);
+
+    } catch (error) {
+        msg.style.color = "red";
+        msg.textContent = "Save Error: " + error.message;
+        console.error("SAVE QUESTIONS ERROR:", error);
+    }
+}
+
+// ট্যাব পরিবর্তনের ফাংশন (Create Exam এবং Question Bank এর মধ্যে যাওয়া আসা)
+
+function switchCourseTab(tab, isBackNavigation = false) {
+    if (!isBackNavigation && currentCourseTab !== tab) {
+        adminPageHistory.push("course-tab-" + currentCourseTab);
+    }
+
+    currentCourseTab = tab;
+
+    const eSec = document.getElementById("courseSubCreateExam");
+    const qSec = document.getElementById("courseSubQuestionBank");
+    const sSec = document.getElementById("courseSubSubscriptions");
+
+    const b1 = document.getElementById("tabCreateExamBtn");
+    const b2 = document.getElementById("tabQuestionBankBtn");
+    const b3 = document.getElementById("tabSubscriptionBtn");
+
+    eSec.style.display = tab === "createExam" ? "block" : "none";
+    qSec.style.display = tab === "questionBank" ? "block" : "none";
+    sSec.style.display = tab === "subscriptions" ? "block" : "none";
+
+    [b1, b2, b3].forEach(btn => {
+        btn.style.background = "#cbd5e1";
+        btn.style.color = "#1e293b";
+    });
+
+    if (tab === "createExam") {
+        b1.style.background = "#2563eb";
+        b1.style.color = "white";
+        loadExamsForActiveCourse();
+
+    } else if (tab === "questionBank") {
+        b2.style.background = "#2563eb";
+        b2.style.color = "white";
+        loadExamDropdownForCourseQuestions();
+
+    } else if (tab === "subscriptions") {
+        b3.style.background = "#2563eb";
+        b3.style.color = "white";
+        loadSubscriptionPlans();
+    }
+}
+
+async function saveSubscriptionPlan() {
+    const name = document.getElementById("subscriptionPlanName").value.trim();
+    const duration = Number(document.getElementById("subscriptionPlanDuration").value);
+    const price = Number(document.getElementById("subscriptionPlanPrice").value);
+    const btn = document.getElementById("saveSubscriptionPlanBtn");
+
+    if (!activeCourseId) {
+        alert("Please select a course first.");
+        return;
+    }
+
+    if (!name || !Number.isInteger(duration) || duration < 1 ||
+        !Number.isFinite(price) || price < 0) {
+        alert("Please enter valid plan details.");
+        return;
+    }
+
+    try {
+        btn.disabled = true;
+        btn.textContent = "Saving...";
+
+        const planId = "plan_" + Date.now();
+
+        await adminDb.collection("courses")
+            .doc(activeCourseId)
+            .collection("subscriptionPlans")
+            .doc(planId)
+            .set({
+                id: planId,
+                courseId: activeCourseId,
+                courseTitle: activeCourseTitle,
+                name: name,
+                durationDays: duration,
+                price: price,
+                status: "active",
+                createdAt: Date.now()
+            });
+
+        alert("Subscription Plan created successfully!");
+
+        await loadSubscriptionPlans();
+
+        document.getElementById("subscriptionPlanName").value = "";
+        document.getElementById("subscriptionPlanDuration").value = "";
+        document.getElementById("subscriptionPlanPrice").value = "";
+
+    } catch (error) {
+        console.error("Subscription Plan Error:", error);
+        alert("Failed to create plan: " + error.message);
+
+    } finally {
+        btn.disabled = false;
+        btn.textContent = "Create Plan";
+    }
+}
+
+
+// LOAD SUBSCRIPTION PLANS
+async function loadSubscriptionPlans() {
+    const container = document.getElementById("subscriptionPlansList");
+    if (!container || !activeCourseId) return;
+
+    container.innerHTML = "<p>Loading subscription plans...</p>";
+
+    try {
+        const snapshot = await adminDb.collection("courses")
+            .doc(activeCourseId)
+            .collection("subscriptionPlans")
+            .orderBy("createdAt", "desc")
+            .get();
+
+        if (snapshot.empty) {
+            container.innerHTML = "<p style='color:#64748b;'>No subscription plans created yet.</p>";
+            return;
+        }
+
+        container.innerHTML = snapshot.docs.map(doc => {
+            const plan = doc.data();
+
+            return `
+                <div style="background:white; border:1px solid #e2e8f0; padding:16px; border-radius:8px; margin-bottom:12px;">
+                    <h4 style="margin:0 0 8px;">
+                        ${escapeHTML(plan.name || "Unnamed Plan")}
+                    </h4>
+
+                    <p style="margin:5px 0;">
+                        Duration: <strong>${Number(plan.durationDays) || 0} Days</strong>
+                    </p>
+
+                    <p style="margin:5px 0;">
+                        Price: <strong>৳${Number(plan.price) || 0}</strong>
+                    </p>
+
+                    <p style="margin:5px 0;">
+                        Status: <strong>${escapeHTML(plan.status || "active")}</strong>
+                    </p>
+
+                    <div style="display:flex; gap:10px; margin-top:12px;">
+                        <button type="button"
+                            onclick="editSubscriptionPlan('${doc.id}')"
+                            style="background:#2563eb; color:white; border:none; padding:8px 16px; border-radius:5px; cursor:pointer;">
+                            Edit
+                        </button>
+
+                        <button type="button"
+                            onclick="deleteSubscriptionPlan('${doc.id}')"
+                            style="background:#dc2626; color:white; border:none; padding:8px 16px; border-radius:5px; cursor:pointer;">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join("");
+
+    } catch (error) {
+        console.error("Load Subscription Plans Error:", error);
+        container.innerHTML = "<p style='color:red;'>Failed to load subscription plans.</p>";
+    }
+}
+
+async function editSubscriptionPlan(planId) {
+    try {
+        const planRef = adminDb.collection("courses")
+            .doc(activeCourseId)
+            .collection("subscriptionPlans")
+            .doc(planId);
+
+        const doc = await planRef.get();
+
+        if (!doc.exists) {
+            alert("Subscription plan not found.");
+            return;
+        }
+
+        const plan = doc.data();
+
+        const name = prompt("Plan Name:", plan.name);
+        if (name === null) return;
+
+        const duration = prompt("Duration (Days):", plan.durationDays);
+        if (duration === null) return;
+
+        const price = prompt("Price (৳):", plan.price);
+        if (price === null) return;
+
+        const days = Number(duration);
+        const amount = Number(price);
+
+        if (!name.trim() || !Number.isInteger(days) || days < 1 ||
+            !Number.isFinite(amount) || amount < 0) {
+            alert("Please enter valid plan details.");
+            return;
+        }
+
+        await planRef.update({
+            name: name.trim(),
+            durationDays: days,
+            price: amount,
+            updatedAt: Date.now()
+        });
+
+        alert("Subscription Plan updated successfully!");
+        await loadSubscriptionPlans();
+
+    } catch (error) {
+        console.error("Edit Plan Error:", error);
+        alert("Failed to update plan: " + error.message);
+    }
+}
+async function deleteSubscriptionPlan(planId) {
+    if (!confirm("Are you sure you want to delete this subscription plan?")) {
+        return;
+    }
+
+    try {
+        await adminDb.collection("courses")
+            .doc(activeCourseId)
+            .collection("subscriptionPlans")
+            .doc(planId)
+            .delete();
+
+        alert("Subscription Plan deleted successfully!");
+        await loadSubscriptionPlans();
+
+    } catch (error) {
+        console.error("Delete Plan Error:", error);
+        alert("Failed to delete plan: " + error.message);
+    }
+}
+
+async function loadExamsForActiveCourse() {
+    const container = document.getElementById("courseExamsList");
+    if (!container) return;
+
+    try {
+        const doc = await adminDb.collection("courses").doc(activeCourseId).get();
+        if (!doc.exists) return;
+
+        const examIds = doc.data().exams || [];
+
+        if (examIds.length === 0) {
+            container.innerHTML = "<p>No exams created yet.</p>";
+            return;
+        }
+
+        const snap = await adminDb.collection("exams").get();
+
+        const exams = snap.docs
+            .map(d => ({ id: d.id, ...d.data() }))
+            .filter(e => examIds.includes(e.id));
+
+        container.innerHTML = exams.map(e => `
+            <div class="question-item"
+                style="background:#f8fafc; padding:15px; margin-top:10px; border:1px solid #e2e8f0; border-radius:8px;">
+
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+
+                    <div>
+                        <strong style="font-size:16px;">${escapeHTML(e.name)}</strong>
+                        <p style="margin:6px 0 0; color:#64748b;">
+                            Marks: ${e.marks} | Duration: ${e.duration}m
+                        </p>
+                    </div>
+
+                    <div style="display:flex; gap:8px;">
+                        <button type="button"
+                            onclick="editCourseExam('${e.id}')"
+                            style="background:#0d9488; color:white; border:none; padding:8px 13px; border-radius:5px; cursor:pointer;">
+                            ✏️ Edit
+                        </button>
+
+                        <button type="button"
+                            onclick="deleteCourseExam('${e.id}')"
+                            style="background:#dc2626; color:white; border:none; padding:8px 13px; border-radius:5px; cursor:pointer;">
+                            🗑️ Delete
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        `).join("");
+
+    } catch (e) {
+        console.error("LOAD COURSE EXAMS ERROR:", e);
+        container.innerHTML = "Failed to load exams.";
+    }
+}
+
+async function editCourseExam(examId) {
+    try {
+        const doc = await adminDb.collection("exams").doc(examId).get();
+
+        if (!doc.exists) {
+            alert("Exam not found!");
+            return;
+        }
+
+        const exam = doc.data();
+
+        document.getElementById("courseExamName").value = exam.name || "";
+        document.getElementById("courseExamDate").value = exam.date || "";
+        document.getElementById("courseExamDuration").value = exam.duration || 30;
+        document.getElementById("courseExamMarks").value = exam.marks || 50;
+        document.getElementById("courseExamNegativeMark").value = exam.negativeMark ?? 0;
+if (!editingCourseExamId) {
+    adminPageHistory.push("course-exam-edit");
+
+    document.getElementById("backNavigationBtn").style.display = "inline-flex";
+}
+        editingCourseExamId = examId;
+
+        document.querySelector("#courseExamForm button[type='submit']")
+            .textContent = "Update Exam";
+
+        const msg = document.getElementById("courseExamMsg");
+        msg.style.color = "#2563eb";
+        msg.textContent = "Editing Exam: " + exam.name;
+
+        document.getElementById("courseSubCreateExam").scrollIntoView({
+            behavior: "smooth"
+        });
+
+    } catch (error) {
+        console.error("EDIT COURSE EXAM ERROR:", error);
+        alert("Unable to load exam: " + error.message);
+    }
+}
+
+async function deleteCourseExam(examId) {
+    if (!confirm("Are you sure you want to delete this exam?")) {
+        return;
+    }
+
+    try {
+        const examRef = adminDb.collection("exams").doc(examId);
+        const examDoc = await examRef.get();
+
+        if (!examDoc.exists) {
+            alert("Exam not found!");
+            return;
+        }
+
+        const courseRef = adminDb.collection("courses").doc(activeCourseId);
+        const courseDoc = await courseRef.get();
+
+        if (courseDoc.exists) {
+            const exams = courseDoc.data().exams || [];
+
+            await courseRef.update({
+                exams: exams.filter(id => id !== examId)
+            });
+        }
+
+        await examRef.delete();
+
+        if (editingCourseExamId === examId) {
+            editingCourseExamId = null;
+            document.getElementById("courseExamForm").reset();
+
+            document.querySelector("#courseExamForm button[type='submit']")
+                .textContent = "Create Exam";
+        }
+
+        alert("Exam deleted successfully!");
+
+        await loadExamsForActiveCourse();
+
+    } catch (error) {
+        console.error("DELETE COURSE EXAM ERROR:", error);
+        alert("Unable to delete exam: " + error.message);
+    }
+}
+
+async function loadExamDropdownForCourseQuestions() {
+    const select = document.getElementById("courseQuestionExamSelect");
+    if (!select) return;
+    try {
+        const doc = await adminDb.collection("courses").doc(activeCourseId).get();
+        if (!doc.exists) return;
+        const examIds = doc.data().exams || [];
+        const snap = await adminDb.collection("exams").get();
+        const exams = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(e => examIds.includes(e.id));
+
+        select.innerHTML = '<option value="">Select an exam</option>' + exams.map(e => `<option value="${e.id}">${escapeHTML(e.name)}</option>`).join("");
+        select.onchange = function() { loadQuestionsForCourseExam(this.value); };
+    } catch (e) {}
+}
+
+
+async function loadQuestionsForCourseExam(examId) {
+    const container = document.getElementById("courseQuestionsList");
+    if (!container || !examId) return;
+
+    try {
+        const snap = await adminDb.collection("questions")
+            .where("examId", "==", examId)
+            .get();
+
+        const questions = snap.docs.map(d => ({
+            ...d.data(),
+            firestoreId: d.id
+        }));
+
+        if (questions.length === 0) {
+            container.innerHTML = "<p>No questions added yet.</p>";
+            return;
+        }
+
+        container.innerHTML = `
+            <h3>Saved Questions (${questions.length})</h3>
+
+            ${questions.map((q, idx) => `
+                <div class="question-item"
+                    style="background:#f8fafc; padding:12px; margin-top:10px; border-radius:8px;">
+
+                    <strong>Q${idx + 1}: ${escapeHTML(q.text)}</strong>
+
+                    <p>Type: ${(q.type || "mcq").toUpperCase()} | Marks: ${q.marks || 1}</p>
+
+                    ${q.type === "mcq" ? `
+                        <p>A. ${escapeHTML(q.A || "")}</p>
+                        <p>B. ${escapeHTML(q.B || "")}</p>
+                        <p>C. ${escapeHTML(q.C || "")}</p>
+                        <p>D. ${escapeHTML(q.D || "")}</p>
+                        <p style="color:green;">Correct: ${escapeHTML(q.correct || "")}</p>
+                    ` : ""}
+
+                    <button type="button" class="edit-question-btn"
+                        onclick="editSavedCourseQuestion('${q.firestoreId}')">
+                        Edit
+                    </button>
+
+                    <button type="button" class="delete-question-btn"
+                        onclick="deleteSavedCourseQuestion('${q.firestoreId}')">
+                        Delete
+                    </button>
+
+                </div>
+            `).join("")}
+        `;
+
+    } catch (e) {
+        console.error("LOAD QUESTIONS ERROR:", e);
+        container.innerHTML = "Failed to load questions.";
+    }
+}
+
+async function editSavedCourseQuestion(questionId) {
+    try {
+        const doc = await adminDb.collection("questions").doc(questionId).get();
+
+        if (!doc.exists) {
+            alert("Question not found!");
+            return;
+        }
+
+        const q = doc.data();
+
+        document.getElementById("courseQuestionExamSelect").value = q.examId;
+        document.getElementById("courseQType").value = q.type || "mcq";
+        document.getElementById("courseQText").value = q.text || "";
+        document.getElementById("courseQMarks").value = q.marks || 1;
+
+        document.getElementById("courseOptA").value = q.A || "";
+        document.getElementById("courseOptB").value = q.B || "";
+        document.getElementById("courseOptC").value = q.C || "";
+        document.getElementById("courseOptD").value = q.D || "";
+        document.getElementById("courseCorrectOpt").value = q.correct || "";
+
+        toggleQuestionFields(q.type || "mcq");
+
+        editingQuestionId = questionId;
+
+        document.getElementById("updateSavedQuestionBtn").style.display = "inline-block";
+
+        document.getElementById("courseQMsg").style.color = "#2563eb";
+        document.getElementById("courseQMsg").textContent = "Editing Saved Question...";
+
+        document.getElementById("courseSubQuestionBank").scrollIntoView({
+            behavior: "smooth"
+        });
+
+    } catch (error) {
+        alert("Unable to edit question: " + error.message);
+    }
+}
+
+
+async function updateSavedCourseQuestion() {
+    if (!editingQuestionId) return;
+
+    const questionData = getCourseQuestionFormData();
+    if (!questionData) return;
+
+    try {
+        const updateData = { ...questionData };
+        delete updateData.draftId;
+
+        await adminDb.collection("questions")
+            .doc(editingQuestionId)
+            .update(updateData);
+
+        const examId = questionData.examId;
+
+        editingQuestionId = null;
+
+        document.getElementById("courseQuestionForm").reset();
+        toggleQuestionFields("mcq");
+
+        document.getElementById("updateSavedQuestionBtn").style.display = "none";
+
+        document.getElementById("courseQMsg").style.color = "green";
+        document.getElementById("courseQMsg").textContent = "Question updated successfully!";
+
+        await loadQuestionsForCourseExam(examId);
+
+    } catch (error) {
+        alert("Update failed: " + error.message);
+    }
+}
+
+
+async function deleteSavedCourseQuestion(questionId) {
+    if (!confirm("এই Saved Question টি Delete করতে চান?")) return;
+
+    try {
+        const doc = await adminDb.collection("questions").doc(questionId).get();
+
+        if (!doc.exists) {
+            alert("Question not found!");
+            return;
+        }
+
+        const examId = doc.data().examId;
+
+        await adminDb.collection("questions").doc(questionId).delete();
+
+        if (editingQuestionId === questionId) {
+            editingQuestionId = null;
+            document.getElementById("courseQuestionForm").reset();
+            toggleQuestionFields("mcq");
+            document.getElementById("updateSavedQuestionBtn").style.display = "none";
+        }
+
+        alert("Question deleted successfully!");
+
+        await loadQuestionsForCourseExam(examId);
+
+    } catch (error) {
+        alert("Delete failed: " + error.message);
+    }
+}
+
+</script>
+
+</body>
+</html>

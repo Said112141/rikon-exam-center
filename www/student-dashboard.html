@@ -1,0 +1,3103 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Dashboard | RIKON'S EXAM CENTER</title>
+
+<link rel="stylesheet" href="style.css">
+
+<style>
+.exam-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 15px 0;
+}
+
+.exam-card h3 {
+    margin-bottom: 10px;
+    color: #172554;
+}
+
+.exam-card button,
+.exam-controls button,
+.question-nav button {
+    margin: 6px 4px;
+}
+
+.exam-info {
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+#examArea {
+    display: none;
+}
+
+.timer {
+    background: #172554;
+    color: white;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 20px;
+    font-size: 18px;
+}
+
+.question-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 15px 0;
+}
+
+.option-label {
+    display: block;
+    padding: 12px;
+    background: white;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    margin: 10px 0;
+    cursor: pointer;
+}
+
+.option-label input {
+    width: auto;
+    margin-right: 10px;
+}
+
+.question-nav {
+    margin: 20px 0;
+}
+
+.question-nav button {
+    min-width: 40px;
+    padding: 9px;
+}
+
+.question-nav button.answered {
+    background: #15803d;
+}
+
+.result-box {
+    background: #eff6ff;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+}
+
+#writtenAnswer {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    margin-top: 12px;
+    font-family: Arial, sans-serif;
+    font-size: 15px;
+}
+
+@media(max-width:500px) {
+    .question-box {
+        padding: 15px;
+    }
+}
+
+.site-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.header-text {
+    text-align: left;
+}
+
+.site-logo {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+    .site-logo {
+        width: 75px;
+        height: 75px;
+    }
+
+    .header-text h1 {
+        font-size: 20px;
+    }
+}
+
+/* EXAM CALENDAR */
+
+.calendar-container {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 15px;
+    padding: 15px;
+    margin-top: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.calendar-header h3 {
+    color: #172554;
+    font-size: 20px;
+}
+
+.calendar-header button {
+    background: #1d4ed8;
+    color: white;
+    border: none;
+    padding: 9px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.calendar-weekdays,
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+}
+
+.calendar-weekdays div {
+    text-align: center;
+    font-weight: bold;
+    color: #475569;
+    padding: 8px 0;
+    font-size: 13px;
+}
+
+.calendar-day {
+    min-height: 55px;
+    background: #f8fafc;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    font-size: 14px;
+}
+
+.calendar-day.today {
+    border: 2px solid #2563eb;
+    font-weight: bold;
+}
+
+.calendar-day.has-exam {
+    background: #dbeafe;
+    color: #1d4ed8;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.calendar-day.empty {
+    background: transparent;
+}
+
+.exam-dot {
+    width: 7px;
+    height: 7px;
+    background: #2563eb;
+    border-radius: 50%;
+}
+
+@media (max-width: 480px) {
+    .calendar-container {
+        padding: 8px;
+    }
+
+    .calendar-weekdays,
+    .calendar-days {
+        gap: 3px;
+    }
+
+    .calendar-day {
+        min-height: 43px;
+        font-size: 12px;
+    }
+
+    .calendar-header h3 {
+        font-size: 16px;
+    }
+}
+
+</style>
+
+<!-- FIREBASE SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<!-- FIREBASE CONFIG -->
+<script src="firebase-config.js"></script>
+
+</head>
+
+<body>
+
+
+<header class="site-header">
+    <div class="header-text">
+        <h1>RIKON'S EXAM CENTER</h1>
+        <p>Student Dashboard</p>
+    </div>
+
+    <img src="logo.png" alt="RIKON'S EXAM CENTER Logo" class="site-logo">
+</header>
+<!-- HAMBURGER MENU BUTTON -->
+
+<button type="button"
+    id="menuToggleBtn"
+    onclick="toggleStudentMenu()"
+    style="
+        position: fixed;
+        top: 100px;
+        left: 20px;
+        z-index: 10000;
+        background: transparent;
+        color: #172554;
+        border: none;
+        font-size: 36px;
+        font-weight: bold;
+        cursor: pointer;
+        padding: 5px;
+    ">
+    ☰
+</button>
+
+<main>
+
+<section class="welcome">
+    <h2 id="welcomeName">Welcome, Student!</h2>
+    <p>Manage your examinations and track your progress.</p>
+</section>
+
+
+<!-- STUDENT DROPDOWN MENU -->
+
+<aside id="studentMenu" style="
+    position: fixed;
+    top: 145px;
+    left: 20px;
+    width: 250px;
+    max-height: 0;
+    overflow: hidden;
+    background: #172554;
+    padding: 0 15px;
+    box-sizing: border-box;
+    border-radius: 12px;
+    z-index: 9998;
+    transition: max-height 0.35s ease, padding 0.35s ease;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+">
+
+    <h2 style="color:white; text-align:center;">
+        Student Menu
+    </h2>
+
+    <hr style="border-color:#475569;">
+
+    <button style="display:block; width:100%; margin:10px 0;"
+        onclick="showSection('available')">
+        Available Exams
+    </button>
+
+    <button style="display:block; width:100%; margin:10px 0;"
+        onclick="showSection('results')">
+        My Results
+    </button>
+<button style="display:block; width:100%; margin:10px 0;"
+    onclick="showSection('payments')">
+    💳 Payment History
+</button>
+<button style="display:block; width:100%; margin:10px 0;"
+    onclick="showSection('notifications')">
+    🔔 Notifications
+</button>
+    <button style="display:block; width:100%; margin:10px 0;"
+        onclick="showSection('routine')">
+        📅 Exam Routine
+    </button>
+
+    <button style="display:block; width:100%; margin:10px 0;"
+        onclick="showSection('profile')">
+        My Profile
+    </button>
+
+    <button style="display:block; width:100%; margin:10px 0; background:#dc2626;"
+        onclick="logout()">
+        Logout
+    </button>
+
+</aside>
+
+
+
+<section class="welcome" id="routineArea" style="display:none;">
+
+    <h2>📅 Examination Calendar</h2>
+
+    <div class="calendar-container">
+
+        <div class="calendar-header">
+
+            <button onclick="changeRoutineMonth(-1)">
+                ❮
+            </button>
+
+            <h3 id="calendarMonthYear"></h3>
+
+            <button onclick="changeRoutineMonth(1)">
+                ❯
+            </button>
+
+        </div>
+
+        <div class="calendar-weekdays">
+            <div>Sun</div>
+            <div>Mon</div>
+            <div>Tue</div>
+            <div>Wed</div>
+            <div>Thu</div>
+            <div>Fri</div>
+            <div>Sat</div>
+        </div>
+
+        <div id="calendarDays" class="calendar-days"></div>
+
+    </div>
+
+    <h3 style="margin-top:25px;">
+        📚 Scheduled Examinations
+    </h3>
+
+    <div id="routineList">
+        Loading examination routine...
+    </div>
+
+    <button onclick="showSection('available')">
+        Back to Dashboard
+    </button>
+
+</section>
+
+
+<section class="welcome" id="dashboardContent">
+
+    <h2>Available Exams</h2>
+    <p>Loading examinations...</p>
+<div class="exam-card" id="studentNoticeBoard" style="margin-top:20px;">
+
+    <h2>📢 Latest Announcements</h2>
+
+    <div id="studentNoticeList">
+        Loading notices...
+    </div>
+
+</div>
+</section>
+
+<section class="welcome exam-secure" id="examArea">
+
+    <div class="timer" id="timer">
+        Time Remaining: 00:00
+    </div>
+
+    <h2 id="examTitle">Examination</h2>
+
+    <p id="questionCounter"></p>
+
+    <div class="question-box" id="questionDisplay"></div>
+
+    <div class="question-nav" id="questionNavigation"></div>
+
+    <div class="exam-controls">
+
+        <button onclick="previousQuestion()" id="previousBtn">
+            Previous
+        </button>
+
+        <button onclick="nextQuestion()" id="nextBtn">
+            Next
+        </button>
+
+        <button onclick="submitExam()" style="background:#15803d;">
+            Submit Exam
+        </button>
+
+    </div>
+
+</section>
+
+<section class="welcome" id="resultArea" style="display:none;">
+
+    <h2>Examination Result</h2>
+
+    <div id="resultContent" class="result-box"></div>
+
+    <button onclick="backToDashboard()">
+        Back to Dashboard
+    </button>
+
+</section>
+<!-- PAID EXAM PAYMENT FORM -->
+
+<div id="paymentFormArea" style="display:none;">
+
+    <div class="exam-card">
+
+        <h2>💳 Exam Payment</h2>
+
+        <p id="paymentExamName"></p>
+        <h3 id="paymentExamFee"></h3>
+<div id="paymentNumbers" style="
+    background:#eff6ff;
+    padding:15px;
+    border-radius:8px;
+    margin:15px 0;
+">
+    Loading payment numbers...
+</div>
+        <label>Payment Method</label>
+
+        <select id="paymentMethod">
+            <option value="bKash">bKash</option>
+            <option value="Nagad">Nagad</option>
+            <option value="Rocket">Rocket</option>
+        </select>
+
+        <label>Sender Mobile Number</label>
+
+        <input
+            type="tel"
+            id="senderNumber"
+            placeholder="Enter your payment number"
+        >
+
+        <label>Transaction ID</label>
+
+        <input
+            type="text"
+            id="transactionId"
+            placeholder="Enter Transaction ID"
+        >
+
+        <button type="button" onclick="submitExamPayment()">
+            Submit Payment
+        </button>
+
+        <button type="button"
+            onclick="document.getElementById('paymentFormArea').style.display='none';">
+            Cancel
+        </button>
+
+    </div>
+
+</div>
+</main>
+
+<footer>
+    <p>© 2026 RIKON'S EXAM CENTER | All Rights Reserved</p>
+</footer>
+
+<script>
+
+// =================================
+// STUDENT SESSION
+// =================================
+
+
+let currentStudent = null;
+let registeredStudent = null;
+
+// VERIFY STUDENT USING FIREBASE
+auth.onAuthStateChanged(async function(user) {
+
+    if (!user) {
+        alert("Please login first.");
+        window.location.replace("index.html");
+        return;
+    }
+
+    try {
+        const studentDoc = await db.collection("students")
+            .doc(user.uid)
+            .get();
+
+        if (!studentDoc.exists) {
+            await auth.signOut();
+            window.location.replace("index.html");
+            return;
+        }
+
+        registeredStudent = studentDoc.data();
+console.log("STUDENT DATA CHECK:", registeredStudent);
+console.log("STUDENT STATUS:", registeredStudent.status);
+console.log("RESTRICTED UNTIL:", registeredStudent.restrictedUntil);
+console.log("CURRENT TIME:", Date.now());
+        if (registeredStudent.status === "blocked") {
+            await auth.signOut();
+            alert("Your account has been blocked by Admin.");
+            window.location.replace("index.html");
+            return;
+        }
+
+        if (Number(registeredStudent.restrictedUntil || 0) > Date.now()) {
+            await auth.signOut();
+            alert(
+                "Your account is temporarily restricted. Reason: " +
+                (registeredStudent.restrictionReason || "Not specified")
+            );
+            window.location.replace("index.html");
+            return;
+        }
+
+        currentStudent = {
+    id: user.uid,
+    name: registeredStudent.name,
+    email: registeredStudent.email,
+    phone: registeredStudent.phone || "",
+    profilePhoto: registeredStudent.profilePhoto || ""
+};
+
+        localStorage.setItem(
+            "rikon_current_student",
+            JSON.stringify(currentStudent)
+        );
+
+        document.getElementById("welcomeName").textContent =
+            "Welcome, " + currentStudent.name + "!";
+try {
+   await loadStudentExamData();
+
+console.log("Firebase Exam Data Loaded Successfully");
+
+// RENDER EXAMS AFTER STUDENT DATA LOADS
+await renderExams();
+} catch (examError) {
+
+    console.error("EXAM DATA LOADING ERROR:", examError);
+
+    alert("Exam Data Loading Error: " + examError.message);
+
+}
+
+try {
+    renderExamRoutine();
+    renderRoutineCalendar();
+
+} catch (routineError) {
+
+    console.error("ROUTINE ERROR:", routineError);
+
+}
+    } catch (error) {
+        console.error("Student Verification Failed:", error);
+        alert("Unable to verify student: " + error.message);
+        await auth.signOut();
+        window.location.replace("index.html");
+    }
+
+});
+
+
+// =================================
+// FIREBASE DATA
+// =================================
+
+let exams = [];
+let questions = [];
+
+let examsLoaded = false;
+let questionsLoaded = false;
+
+async function loadStudentExamData() {
+
+    // LOAD EXAMS
+    try {
+
+        const examSnapshot = await db.collection("exams").get();
+
+        exams = examSnapshot.docs.map(doc => ({
+            ...doc.data(),
+            firestoreId: doc.id
+        }));
+
+        examsLoaded = true;
+
+        console.log("EXAMS LOADED:", exams.length);
+
+    } catch (error) {
+
+        console.error("EXAMS PERMISSION ERROR:", error);
+        throw error;
+
+    }
+
+    // LOAD QUESTIONS
+    try {
+
+        const questionSnapshot = await db.collection("questions").get();
+
+        questions = questionSnapshot.docs.map(doc => ({
+            ...doc.data(),
+            firestoreId: doc.id
+        }));
+
+        questionsLoaded = true;
+
+        console.log("QUESTIONS LOADED:", questions.length);
+// GO TO FIRST EXAM MONTH
+if (exams.length > 0) {
+
+    const firstExamDate = exams
+        .map(exam => new Date(exam.date))
+        .filter(date => !isNaN(date.getTime()))
+        .sort((a, b) => a - b)[0];
+
+    if (firstExamDate) {
+        routineCalendarDate = new Date(
+            firstExamDate.getFullYear(),
+            firstExamDate.getMonth(),
+            1
+        );
+
+        renderRoutineCalendar();
+    }
+}
+    } catch (error) {
+
+        console.error("QUESTIONS PERMISSION ERROR:", error);
+        throw error;
+
+    }
+
+}
+let currentExam = null;
+let currentQuestions = [];
+let currentIndex = 0;
+let answers = {};
+let remainingSeconds = 0;
+let timerInterval = null;
+let examFinished = false;
+let examSubmitting = false;
+let examTabWarnings = 0;
+let accessCheckInterval = null;
+let accessDenied = false;
+
+
+// =================================
+// STUDENT ACCOUNT ACCESS
+// =================================
+
+
+function checkStudentAccess() {
+
+    if (accessDenied) return false;
+
+    // WAIT UNTIL FIREBASE STUDENT DATA LOADS
+    if (!currentStudent || !registeredStudent) {
+        return true;
+    }
+
+    // CHECK TEMPORARY RESTRICTION
+    if (Number(registeredStudent.restrictedUntil || 0) > Date.now()) {
+
+        accessDenied = true;
+
+        clearInterval(timerInterval);
+
+        if (accessCheckInterval !== null) {
+            clearInterval(accessCheckInterval);
+        }
+
+        examFinished = true;
+
+        const remaining = registeredStudent.restrictedUntil - Date.now();
+
+        const remainingHours = Math.floor(
+            remaining / (60 * 60 * 1000)
+        );
+
+        const remainingMinutes = Math.ceil(
+            (remaining % (60 * 60 * 1000)) / (60 * 1000)
+        );
+
+        auth.signOut();
+
+        localStorage.removeItem("rikon_current_student");
+
+        alert(
+            "YOUR ACCOUNT IS TEMPORARILY RESTRICTED!\n\n" +
+            "Reason: " +
+            (registeredStudent.restrictionReason || "Not specified") +
+            "\n\nRemaining time: " +
+            remainingHours + " hours " +
+            remainingMinutes + " minutes.\n\n" +
+            "Please contact Admin."
+        );
+
+        window.location.replace("index.html");
+
+        return false;
+    }
+
+    // CHECK BLOCK STATUS
+    if (registeredStudent.status === "blocked") {
+
+        accessDenied = true;
+
+        clearInterval(timerInterval);
+
+        if (accessCheckInterval !== null) {
+            clearInterval(accessCheckInterval);
+        }
+
+        examFinished = true;
+
+        auth.signOut();
+
+        localStorage.removeItem("rikon_current_student");
+
+        alert(
+            "Your account has been blocked by Admin. Please contact Admin."
+        );
+
+        window.location.replace("index.html");
+
+        return false;
+    }
+
+    return true;
+}
+
+
+
+// =================================
+// DISPLAY SECTIONS
+// =================================
+
+
+function hideAll() {
+
+    document.getElementById("dashboardContent").style.display = "none";
+
+    document.getElementById("examArea").style.display = "none";
+
+    document.getElementById("resultArea").style.display = "none";
+
+    document.getElementById("routineArea").style.display = "none";
+}
+
+function renderExamRoutine() {
+
+    const routineList = document.getElementById("routineList");
+
+      const exams = Array.isArray(window.exams) ? window.exams : [];
+    if (!Array.isArray(exams) || exams.length === 0) {
+
+        routineList.innerHTML = `
+            <p>No examination scheduled yet.</p>
+        `;
+
+        return;
+    }
+
+    const now = new Date();
+
+    exams.sort((a, b) =>
+        new Date(a.date) - new Date(b.date)
+    );
+
+    routineList.innerHTML = exams.map(exam => {
+
+        const startDate = new Date(exam.date);
+
+        if (isNaN(startDate.getTime())) return "";
+
+        const duration = Number(exam.duration) || 0;
+
+        const endDate = new Date(
+            startDate.getTime() + duration * 60000
+        );
+
+        let status = "Upcoming";
+        let statusColor = "#2563eb";
+
+        if (now >= endDate) {
+            status = "Completed";
+            statusColor = "#64748b";
+        } else if (now >= startDate) {
+            status = "Ongoing";
+            statusColor = "#16a34a";
+        }
+
+        return `
+            <div class="exam-card">
+
+                <div style="
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:center;
+                    gap:10px;
+                    flex-wrap:wrap;
+                ">
+
+                    <h3>${escapeHTML(exam.name)}</h3>
+
+                    <span style="
+                        background:${statusColor};
+                        color:white;
+                        padding:5px 12px;
+                        border-radius:20px;
+                        font-size:12px;
+                        font-weight:bold;
+                    ">
+                        ${status}
+                    </span>
+
+                </div>
+
+                <p>
+                    <strong>Subject:</strong>
+                    ${escapeHTML(exam.category)}
+                </p>
+
+                <p>
+                    <strong>Exam Date:</strong>
+                    ${escapeHTML(startDate.toLocaleDateString())}
+                </p>
+
+                <p>
+                    <strong>Starting Time:</strong>
+                    ${escapeHTML(startDate.toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit"
+                    }))}
+                </p>
+
+                <p>
+                    <strong>Ending Time:</strong>
+                    ${escapeHTML(endDate.toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit"
+                    }))}
+                </p>
+
+                <p>
+                    <strong>Duration:</strong>
+                    ${duration} Minutes
+                </p>
+
+                <p>
+                    <strong>Total Marks:</strong>
+                    ${escapeHTML(exam.marks)}
+                </p>
+
+            </div>
+        `;
+
+    }).join("");
+}
+
+let routineCalendarDate = new Date();
+
+function changeRoutineMonth(direction) {
+
+    routineCalendarDate.setMonth(
+        routineCalendarDate.getMonth() + direction
+    );
+
+    renderRoutineCalendar();
+}
+
+function renderRoutineCalendar() {
+
+    const calendarDays = document.getElementById("calendarDays");
+    const monthYear = document.getElementById("calendarMonthYear");
+
+    const year = routineCalendarDate.getFullYear();
+    const month = routineCalendarDate.getMonth();
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const totalDays = new Date(year, month + 1, 0).getDate();
+
+    const monthName = routineCalendarDate.toLocaleDateString(
+        "en-US",
+        { month: "long", year: "numeric" }
+    );
+
+    monthYear.textContent = monthName;
+
+     const examData = exams;
+
+    const examDates = {};
+
+    examData.forEach(exam => {
+
+        const date = new Date(exam.date);
+
+        if (isNaN(date.getTime())) return;
+
+        if (
+            date.getFullYear() === year &&
+            date.getMonth() === month
+        ) {
+            const day = date.getDate();
+
+            examDates[day] = (examDates[day] || 0) + 1;
+        }
+
+    });
+
+    const today = new Date();
+
+    let html = "";
+
+    for (let i = 0; i < firstDay; i++) {
+
+        html += `<div class="calendar-day empty"></div>`;
+
+    }
+
+    for (let day = 1; day <= totalDays; day++) {
+
+        const isToday =
+            today.getFullYear() === year &&
+            today.getMonth() === month &&
+            today.getDate() === day;
+
+        const hasExam = examDates[day] > 0;
+
+        html += `
+            <div
+                class="calendar-day
+                ${isToday ? "today" : ""}
+                ${hasExam ? "has-exam" : ""}"
+                ${hasExam ? `onclick="showRoutineDate(${year}, ${month}, ${day})"` : ""}
+            >
+
+                <span>${day}</span>
+
+                ${hasExam ? `<span class="exam-dot"></span>` : ""}
+
+            </div>
+        `;
+
+    }
+
+    calendarDays.innerHTML = html;
+}
+
+function showRoutineDate(year, month, day) {
+
+    const selectedDate = new Date(year, month, day);
+
+    const selectedExamData = exams;
+
+    const selectedExams = selectedExamData.filter(exam => {
+
+        const examDate = new Date(exam.date);
+
+        return (
+            !isNaN(examDate.getTime()) &&
+            examDate.getFullYear() === year &&
+            examDate.getMonth() === month &&
+            examDate.getDate() === day
+        );
+
+    });
+
+    const routineList = document.getElementById("routineList");
+
+    if (selectedExams.length === 0) return;
+
+    routineList.innerHTML = `
+        <h3>
+            Exams on ${selectedDate.toLocaleDateString()}
+        </h3>
+    ` + selectedExams.map(exam => {
+
+        const start = new Date(exam.date);
+
+        const end = new Date(
+            start.getTime() + Number(exam.duration) * 60000
+        );
+
+        return `
+            <div class="exam-card">
+
+                <h3>${escapeHTML(exam.name)}</h3>
+
+                <p>Subject: ${escapeHTML(exam.category)}</p>
+
+                <p>Starting Time: ${escapeHTML(start.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                }))}</p>
+
+                <p>Ending Time: ${escapeHTML(end.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                }))}</p>
+
+                <p>Duration: ${escapeHTML(exam.duration)} Minutes</p>
+
+                <p>Total Marks: ${escapeHTML(exam.marks)}</p>
+
+            </div>
+        `;
+
+    }).join("");
+}
+
+
+// ===================================
+// STUDENT NOTICE BOARD
+// ===================================
+
+
+async function renderStudentNotices() {
+
+    const container = document.getElementById("studentNoticeList");
+
+    if (!container) return;
+
+    container.innerHTML = "<p>Loading announcements...</p>";
+
+    try {
+
+        // LOAD NOTICES FROM FIREBASE
+        const snapshot = await db.collection("notices").get();
+
+        const notices = snapshot.docs.map(doc => ({
+            ...doc.data(),
+            firestoreId: doc.id
+        }));
+
+        // SORT NEWEST FIRST
+        notices.sort((a, b) =>
+            Number(b.createdAt || 0) - Number(a.createdAt || 0)
+        );
+
+        if (notices.length === 0) {
+
+            container.innerHTML =
+                "<p>No announcements available.</p>";
+
+            return;
+        }
+
+        container.innerHTML = notices.map(notice => `
+
+            <div class="exam-card" style="margin-top:12px;">
+
+                <h3>${escapeHTML(notice.title || "Announcement")}</h3>
+
+                <p>${escapeHTML(notice.description || "")}</p>
+
+                <p>
+                    <strong>Priority:</strong>
+                    ${escapeHTML(notice.priority || "Normal")}
+                </p>
+
+                <small>${escapeHTML(notice.date || "")}</small>
+
+            </div>
+
+        `).join("");
+
+    } catch (error) {
+
+        console.error("STUDENT NOTICE LOADING ERROR:", error);
+
+        container.innerHTML =
+            "<p>Unable to load announcements: " +
+            escapeHTML(error.message) +
+            "</p>";
+
+    }
+}
+
+// ===================================
+// STUDENT HAMBURGER MENU
+// ===================================
+
+function toggleStudentMenu() {
+
+    const menu = document.getElementById("studentMenu");
+
+    if (!menu) return;
+
+    if (menu.style.maxHeight === "450px") {
+
+        menu.style.maxHeight = "0";
+        menu.style.padding = "0 15px";
+
+    } else {
+
+        menu.style.maxHeight = "450px";
+        menu.style.padding = "10px 15px";
+
+    }
+}
+function showSection(section) {
+
+    if (!checkStudentAccess()) return;
+// Automatically close student menu
+
+const studentMenu = document.getElementById("studentMenu");
+
+if (studentMenu) {
+    studentMenu.style.maxHeight = "0";
+    studentMenu.style.padding = "0 15px";
+}
+    hideAll();
+
+    if (section === "routine") {
+
+        document.getElementById("routineArea").style.display = "block";
+
+        renderExamRoutine();
+renderRoutineCalendar();
+        return;
+    }
+
+    document.getElementById("dashboardContent").style.display = "block";
+renderStudentNotices();
+    if (section === "available") {
+        renderExams();
+    }
+
+    if (section === "results") {
+        showResults();
+    }
+if (section === "payments") {
+    showPaymentHistory();
+}
+if (section === "notifications") {
+    showNotifications();
+}
+    if (section === "profile") {
+        showProfile();
+    }
+}
+
+
+
+// =================================
+// SECURITY
+// =================================
+
+function escapeHTML(value) {
+
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[char]);
+
+}
+
+
+// =================================
+// STUDENT PROFILE
+// =================================
+
+
+
+function showProfile() {
+
+    const container = document.getElementById("dashboardContent");
+
+    const studentName = currentStudent.name || "Student";
+    const studentID = currentStudent.id || "N/A";
+    const studentEmail = currentStudent.email || "N/A";
+
+    const studentPhone = currentStudent.phone ||
+                         currentStudent.mobile ||
+                         currentStudent.phoneNumber ||
+                         "Not provided";
+
+    const initial = studentName.charAt(0).toUpperCase();
+
+    container.innerHTML = `
+
+        <h2 style="font-size:26px;margin-bottom:20px;">
+            My Profile
+        </h2>
+
+        <!-- PREMIUM PROFILE HEADER -->
+
+        <div style="
+            background:linear-gradient(135deg,#172554,#2563eb);
+            color:white;
+            padding:25px;
+            border-radius:18px;
+            margin-bottom:20px;
+            box-shadow:0 8px 25px rgba(23,37,84,0.2);
+            text-align:center;
+        ">
+
+            <!-- PROFILE PHOTO -->
+
+            <div style="
+                width:100px;
+                height:100px;
+                border-radius:50%;
+                background:white;
+                color:#172554;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                font-size:38px;
+                font-weight:bold;
+                margin:0 auto 12px;
+                overflow:hidden;
+                border:3px solid white;
+            ">
+
+                ${currentStudent.profilePhoto
+                    ? `<img src="${currentStudent.profilePhoto}"
+                        style="width:100%;height:100%;object-fit:cover;">`
+                    : escapeHTML(initial)
+                }
+
+            </div>
+
+            <label for="studentPhotoUpload" style="
+                display:inline-block;
+                background:white;
+                color:#172554;
+                padding:8px 16px;
+                border-radius:20px;
+                font-size:13px;
+                font-weight:bold;
+                cursor:pointer;
+            ">
+                📷 Change Profile Photo
+            </label>
+
+            <input
+                type="file"
+                id="studentPhotoUpload"
+                accept="image/*"
+                onchange="uploadStudentPhoto(event)"
+                style="display:none;"
+            >
+
+            <h2 style="color:white;font-size:24px;margin:15px 0 5px;">
+                ${escapeHTML(studentName)}
+            </h2>
+
+            <p style="font-size:14px;margin:5px;">
+                Student ID: ${escapeHTML(studentID)}
+            </p>
+
+            <span style="
+                display:inline-block;
+                background:#16a34a;
+                padding:5px 14px;
+                border-radius:20px;
+                font-size:13px;
+            ">
+                ● Active Account
+            </span>
+
+        </div>
+
+        <!-- EDIT PROFILE -->
+
+        <div class="exam-card" style="
+            padding:22px;
+            border-radius:15px;
+            margin-bottom:20px;
+            text-align:left;
+        ">
+
+            <h3>✏️ Edit Profile</h3>
+
+            <label>Full Name</label>
+
+            <input
+                type="text"
+                id="editStudentName"
+                value="${escapeHTML(studentName)}"
+                placeholder="Enter your name"
+                style="width:100%;box-sizing:border-box;"
+            >
+
+            <br><br>
+
+            <label>Mobile Number</label>
+
+            <input
+                type="tel"
+                id="editStudentPhone"
+                value="${escapeHTML(studentPhone === "Not provided" ? "" : studentPhone)}"
+                placeholder="01712345678"
+                maxlength="11"
+                style="width:100%;box-sizing:border-box;"
+            >
+
+            <br><br>
+
+            <button onclick="updateStudentProfile()">
+                Save Profile Changes
+            </button>
+
+            <p id="profileUpdateMessage"></p>
+
+        </div>
+
+        <!-- PERSONAL INFORMATION -->
+
+        <div class="exam-card" style="
+            padding:22px;
+            border-radius:15px;
+            margin-bottom:20px;
+            text-align:left;
+        ">
+
+            <h3>👤 Personal Information</h3>
+
+            <hr>
+
+            <p><strong>Full Name</strong></p>
+            <p>${escapeHTML(studentName)}</p>
+
+            <p><strong>Email Address</strong></p>
+            <p>${escapeHTML(studentEmail)}</p>
+
+            <p><strong>Mobile Number</strong></p>
+            <p>${escapeHTML(studentPhone)}</p>
+
+            <p><strong>Account Status</strong></p>
+
+            <p style="color:#16a34a;font-weight:bold;">
+                Active
+            </p>
+
+        </div>
+
+        <!-- PASSWORD SECURITY -->
+
+        <div class="exam-card" style="
+            padding:22px;
+            border-radius:15px;
+            margin-bottom:20px;
+            text-align:left;
+        ">
+
+            <h3>🔐 Change Password</h3>
+
+            <br>
+
+            <label>Current Password</label>
+
+            <input
+                type="password"
+                id="currentPassword"
+                placeholder="Enter current password"
+                style="width:100%;box-sizing:border-box;"
+            >
+
+            <br><br>
+
+            <label>New Password</label>
+
+            <input
+                type="password"
+                id="newPassword"
+                placeholder="Enter new password"
+                style="width:100%;box-sizing:border-box;"
+            >
+
+            <br><br>
+
+            <label>Confirm New Password</label>
+
+            <input
+                type="password"
+                id="confirmPassword"
+                placeholder="Confirm new password"
+                style="width:100%;box-sizing:border-box;"
+            >
+
+            <br><br>
+
+            <button onclick="changeStudentPassword()">
+                Update Password
+            </button>
+
+            <p id="passwordMessage"></p>
+
+        </div>
+
+    `;
+}
+
+
+
+
+
+function uploadStudentPhoto(event) {
+
+    if (!checkStudentAccess()) return;
+
+    const file = event.target.files[0];
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+        alert("Please select a valid image.");
+        event.target.value = "";
+        return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+        alert("Image size must be less than 5 MB.");
+        event.target.value = "";
+        return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+
+        const image = new Image();
+
+        image.onload = async function() {
+
+            try {
+
+                const canvas = document.createElement("canvas");
+
+                const maxSize = 300;
+
+                let width = image.width;
+                let height = image.height;
+
+                if (width > height && width > maxSize) {
+                    height = Math.round(height * maxSize / width);
+                    width = maxSize;
+                } else if (height > maxSize) {
+                    width = Math.round(width * maxSize / height);
+                    height = maxSize;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+
+                const context = canvas.getContext("2d");
+
+                context.drawImage(image, 0, 0, width, height);
+
+                const photoData = canvas.toDataURL("image/jpeg", 0.65);
+
+                if (photoData.length > 700000) {
+                    alert("Image is too large after compression. Please choose another image.");
+                    return;
+                }
+
+                // SAVE PHOTO IN FIREBASE
+                await db.collection("students")
+                    .doc(currentStudent.id)
+                    .update({
+                        profilePhoto: photoData
+                    });
+
+                // UPDATE CURRENT STUDENT
+                currentStudent.profilePhoto = photoData;
+
+                localStorage.setItem(
+                    "rikon_current_student",
+                    JSON.stringify(currentStudent)
+                );
+
+                showProfile();
+
+                alert("Profile photo updated successfully!");
+
+            } catch(error) {
+
+                console.error("PROFILE PHOTO UPDATE ERROR:", error);
+
+                alert("Unable to update profile photo: " + error.message);
+
+            }
+        };
+
+        image.onerror = function() {
+            alert("Unable to load this image.");
+        };
+
+        image.src = e.target.result;
+    };
+
+    reader.readAsDataURL(file);
+}
+
+
+async function updateStudentProfile() {
+
+    if (!checkStudentAccess()) return;
+
+    const name = document.getElementById("editStudentName").value.trim();
+
+    const phone = document.getElementById("editStudentPhone").value.trim();
+
+    const message = document.getElementById("profileUpdateMessage");
+
+    message.style.color = "red";
+
+    if (!name || !phone) {
+        message.textContent = "Please fill in all fields.";
+        return;
+    }
+
+    if (!/^01[3-9][0-9]{8}$/.test(phone)) {
+        message.textContent = "Please enter a valid Bangladesh mobile number.";
+        return;
+    }
+
+    try {
+
+        // UPDATE STUDENT DATA IN FIREBASE
+        await db.collection("students")
+            .doc(currentStudent.id)
+            .update({
+                name: name,
+                phone: phone
+            });
+
+        // UPDATE CURRENT LOGGED-IN STUDENT
+        currentStudent.name = name;
+        currentStudent.phone = phone;
+
+        localStorage.setItem(
+            "rikon_current_student",
+            JSON.stringify(currentStudent)
+        );
+
+        // UPDATE REGISTERED STUDENT DATA
+        registeredStudent.name = name;
+        registeredStudent.phone = phone;
+
+        message.style.color = "green";
+        message.textContent = "Profile updated successfully!";
+
+        // UPDATE WELCOME NAME
+        document.getElementById("welcomeName").textContent =
+            "Welcome, " + name + "!";
+
+       // REFRESH PROFILE DISPLAY
+showProfile();
+
+const updatedMessage = document.getElementById("profileUpdateMessage");
+
+if (updatedMessage) {
+    updatedMessage.style.color = "green";
+    updatedMessage.textContent = "Profile updated successfully!";
+}
+
+    } catch (error) {
+
+        console.error("PROFILE UPDATE ERROR:", error);
+
+        message.style.color = "red";
+        message.textContent =
+            "Unable to update profile: " + error.message;
+
+    }
+}
+
+function changeStudentPassword() {
+
+    if (!checkStudentAccess()) return;
+
+    const currentPassword =
+        document.getElementById("currentPassword").value;
+
+    const newPassword =
+        document.getElementById("newPassword").value;
+
+    const confirmPassword =
+        document.getElementById("confirmPassword").value;
+
+    const message =
+        document.getElementById("passwordMessage");
+
+    message.style.color = "red";
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        message.textContent = "Please fill in all password fields.";
+        return;
+    }
+
+    if (newPassword.length < 6) {
+        message.textContent = "New password must be at least 6 characters.";
+        return;
+    }
+
+    if (newPassword !== confirmPassword) {
+        message.textContent = "New passwords do not match.";
+        return;
+    }
+
+    let students = [];
+
+    try {
+        students = JSON.parse(
+            localStorage.getItem("rikon_students") || "[]"
+        );
+
+        if (!Array.isArray(students)) students = [];
+
+    } catch(error) {
+        message.textContent = "Unable to load student accounts.";
+        return;
+    }
+
+    const studentIndex = students.findIndex(
+        student =>
+            String(student.id) === String(currentStudent.id)
+    );
+
+    if (studentIndex === -1) {
+        message.textContent = "Student account not found.";
+        return;
+    }
+
+    if (students[studentIndex].password !== currentPassword) {
+        message.textContent = "Current password is incorrect.";
+        return;
+    }
+
+    if (currentPassword === newPassword) {
+        message.textContent = "New password must be different.";
+        return;
+    }
+
+    students[studentIndex].password = newPassword;
+
+    localStorage.setItem(
+        "rikon_students",
+        JSON.stringify(students)
+    );
+
+    document.getElementById("currentPassword").value = "";
+    document.getElementById("newPassword").value = "";
+    document.getElementById("confirmPassword").value = "";
+
+    message.style.color = "green";
+    message.textContent = "Password changed successfully!";
+}
+
+
+// =================================
+// EXAM LIST
+// =================================
+
+
+
+
+async function renderExams() {
+
+    const container = document.getElementById("dashboardContent");
+
+// WAIT FOR STUDENT DATA
+if (!currentStudent || !currentStudent.id) {
+
+    container.innerHTML = `
+        <h2>Available Exams</h2>
+        <p>Loading student information...</p>
+    `;
+
+    return;
+}
+
+try {
+
+        // LOAD STUDENT PAYMENTS FROM FIREBASE
+        const paymentSnapshot = await db.collection("payments")
+            .where("studentId", "==", currentStudent.id)
+            .get();
+
+        const payments = paymentSnapshot.docs.map(doc => doc.data());
+
+        if (exams.length === 0) {
+
+            container.innerHTML = `
+                <h2>Available Exams</h2>
+                <p>No examinations available.</p>
+
+                <div class="exam-card" id="studentNoticeBoard" style="margin-top:20px;">
+                    <h2>📢 Latest Announcements</h2>
+                    <div id="studentNoticeList">
+                        Loading notices...
+                    </div>
+                </div>
+            `;
+
+            renderStudentNotices();
+            return;
+        }
+
+        container.innerHTML = `
+
+            <h2>Available Exams</h2>
+
+            <div id="examReminderCard"></div>
+
+            ${exams.map((exam, index) => {
+
+                const matchingPayments = payments.filter(payment =>
+                    String(payment.examName) === String(exam.name)
+                );
+
+                const studentPayment =
+                    matchingPayments.find(payment => payment.status === "approved") ||
+                    matchingPayments.find(payment => payment.status === "pending");
+
+                let paymentButton = "";
+
+                if (exam.paymentType === "paid") {
+
+                    if (studentPayment && studentPayment.status === "approved") {
+
+                        paymentButton = `
+                            <button onclick="startExam(${index})"
+                                style="background:#16a34a;">
+                                Start Examination
+                            </button>
+                        `;
+
+                    } else if (studentPayment && studentPayment.status === "pending") {
+
+                        paymentButton = `
+                            <button disabled style="background:#64748b;">
+                                Payment Pending
+                            </button>
+                        `;
+
+                    } else {
+
+                        paymentButton = `
+                            <button onclick="openPaymentForm(${index})"
+                                style="background:#16a34a;">
+                                Pay Now - ৳${Number(exam.fee || 0)}
+                            </button>
+                        `;
+
+                    }
+
+                } else {
+
+                    paymentButton = `
+                        <button onclick="startExam(${index})">
+                            Start Examination
+                        </button>
+                    `;
+
+                }
+
+                return `
+
+                    <div class="exam-card">
+
+                        <h3>${escapeHTML(exam.name)}</h3>
+
+                        <div class="exam-info">
+
+                            Category: ${escapeHTML(exam.category)}<br>
+
+                            Payment Type: ${exam.paymentType === "paid" ? "Paid Exam" : "Free Exam"}<br>
+
+                            Exam Fee: ${exam.paymentType === "paid" ? "৳" + Number(exam.fee || 0) : "Free"}<br>
+
+                            Date: ${escapeHTML(exam.date)}<br>
+
+                            Duration: ${escapeHTML(exam.duration)} Minutes<br>
+
+                            Total Marks: ${escapeHTML(exam.marks)}
+
+                        </div>
+
+                        ${paymentButton}
+
+                    </div>
+
+                `;
+
+            }).join("")}
+
+            <div class="exam-card" id="studentNoticeBoard" style="margin-top:20px;">
+                <h2>📢 Latest Announcements</h2>
+                <div id="studentNoticeList">
+                    Loading notices...
+                </div>
+            </div>
+
+        `;
+
+        renderExamReminder();
+        renderStudentNotices();
+
+    } catch (error) {
+
+        console.error("STUDENT PAYMENT LOADING ERROR:", error);
+
+        container.innerHTML = `
+            <h2>Available Exams</h2>
+            <p>Unable to load payment status: ${escapeHTML(error.message)}</p>
+        `;
+
+    }
+}
+
+
+async function enableExamNotifications() {
+
+    if (!("Notification" in window)) {
+        alert("Your browser does not support notifications.");
+        return;
+    }
+
+    const permission = await Notification.requestPermission();
+
+    if (permission === "granted") {
+
+        alert("Exam Notifications Enabled Successfully! 🔔");
+
+    } else {
+
+        alert("Please allow notifications from your browser settings.");
+
+    }
+}
+let examReminderInterval = null;
+let notifiedExams = new Set();
+
+function checkExamNotifications() {
+
+    if (!("Notification" in window)) return;
+
+    if (Notification.permission !== "granted") return;
+
+    const now = Date.now();
+
+    exams.forEach(exam => {
+
+        const startTime = new Date(exam.date).getTime();
+
+        if (isNaN(startTime)) return;
+
+        const timeLeft = startTime - now;
+
+        const examKey = String(exam.id || exam.name + exam.date);
+
+        if (
+            timeLeft > 0 &&
+            timeLeft <= 5 * 60 * 1000 &&
+            !notifiedExams.has(examKey)
+        ) {
+
+            new Notification("RIKON'S EXAM CENTER 🔔", {
+                body: exam.name + " starts in 5 minutes. Get ready!",
+                icon: "logo.png"
+            });
+
+            notifiedExams.add(examKey);
+        }
+
+    });
+}
+
+setInterval(checkExamNotifications, 10000);
+function renderExamReminder() {
+
+    const card = document.getElementById("examReminderCard");
+
+    if (!card) return;
+
+    if (examReminderInterval !== null) {
+        clearInterval(examReminderInterval);
+    }
+
+    function updateReminder() {
+
+        const now = new Date();
+
+        const validExams = exams.map(exam => {
+
+            const start = new Date(exam.date);
+
+            const end = new Date(
+                start.getTime() + Number(exam.duration) * 60000
+            );
+
+            return {
+                exam,
+                start,
+                end
+            };
+
+        }).filter(item =>
+            !isNaN(item.start.getTime()) &&
+            !isNaN(item.end.getTime())
+        );
+
+        const ongoingExam = validExams.find(item =>
+            now >= item.start && now < item.end
+        );
+
+        const upcomingExams = validExams
+            .filter(item => item.start > now)
+            .sort((a, b) => a.start - b.start);
+
+        const nextExam = ongoingExam || upcomingExams[0];
+
+        if (!nextExam) {
+
+            card.innerHTML = `
+                <div class="exam-card">
+                    <h3>📅 Exam Reminder</h3>
+                    <p>No upcoming examinations.</p>
+                </div>
+            `;
+
+            return;
+        }
+
+        const isOngoing = Boolean(ongoingExam);
+
+        const targetTime = isOngoing
+            ? nextExam.end
+            : nextExam.start;
+
+        const remaining = Math.max(
+            0,
+            targetTime.getTime() - now.getTime()
+        );
+
+        const days = Math.floor(remaining / 86400000);
+        const hours = Math.floor((remaining % 86400000) / 3600000);
+        const minutes = Math.floor((remaining % 3600000) / 60000);
+        const seconds = Math.floor((remaining % 60000) / 1000);
+
+        card.innerHTML = `
+            <div class="exam-card" style="
+                background:#eff6ff;
+                border:2px solid #2563eb;
+                margin:20px 0;
+                padding:20px;
+            ">
+
+                <h2>🔔 ${isOngoing ? "Ongoing Examination" : "Upcoming Exam Reminder"}</h2>
+
+                <h3>${escapeHTML(nextExam.exam.name)}</h3>
+
+                <p>
+                    <strong>Date:</strong>
+                    ${escapeHTML(nextExam.start.toLocaleDateString())}
+                </p>
+
+                <p>
+                    <strong>Starting Time:</strong>
+                    ${escapeHTML(nextExam.start.toLocaleTimeString([], {
+                        hour:"2-digit",
+                        minute:"2-digit"
+                    }))}
+                </p>
+
+                <h3 style="margin-top:15px;color:#1d4ed8;">
+                    ${isOngoing ? "Time Remaining" : "Exam Starts In"}
+                </h3>
+
+                <div style="
+                    font-size:20px;
+                    font-weight:bold;
+                    margin-top:10px;
+                    color:#1e40af;
+                ">
+                    ${days}d : ${hours}h : ${minutes}m : ${seconds}s
+                </div>
+<button onclick="enableExamNotifications()" style="
+    margin-top:15px;
+    padding:12px 20px;
+    background:#2563eb;
+    color:white;
+    border:none;
+    border-radius:8px;
+    font-weight:bold;
+    cursor:pointer;
+">
+    🔔 Enable Exam Notifications
+</button>
+            </div>
+        `;
+    }
+
+    updateReminder();
+
+    examReminderInterval = setInterval(
+        updateReminder,
+        1000
+    );
+}
+
+
+
+
+
+// =================================
+// START EXAM
+// =================================
+// ===================================
+// OPEN EXAM PAYMENT FORM
+// ===================================
+
+let selectedPaymentExam = null;
+// ===================================
+// LOAD STUDENT PAYMENT NUMBERS
+// ===================================
+
+
+async function loadStudentPaymentNumbers() {
+
+    const container = document.getElementById("paymentNumbers");
+
+    if (!container) return;
+
+    container.innerHTML = "<p>Loading payment numbers...</p>";
+
+    try {
+
+        // LOAD PAYMENT SETTINGS FROM FIREBASE
+        const settingsDoc = await db
+            .collection("paymentSettings")
+            .doc("default")
+            .get();
+
+        const settings = settingsDoc.exists
+            ? settingsDoc.data()
+            : {};
+
+        let html = "";
+
+        if (settings.bkash) {
+            html += `<p><strong>bKash:</strong> ${escapeHTML(settings.bkash)}</p>`;
+        }
+
+        if (settings.nagad) {
+            html += `<p><strong>Nagad:</strong> ${escapeHTML(settings.nagad)}</p>`;
+        }
+
+        if (settings.rocket) {
+            html += `<p><strong>Rocket:</strong> ${escapeHTML(settings.rocket)}</p>`;
+        }
+
+        container.innerHTML = html ||
+            "<p>Payment numbers are not available yet.</p>";
+
+    } catch (error) {
+
+        console.error("STUDENT PAYMENT SETTINGS ERROR:", error);
+
+        container.innerHTML =
+            "<p>Unable to load payment numbers.</p>";
+
+    }
+}
+
+function openPaymentForm(index) {
+
+    if (!checkStudentAccess()) return;
+
+    const exam = exams[index];
+
+    if (!exam || exam.paymentType !== "paid") return;
+
+    selectedPaymentExam = exam;
+
+    document.getElementById("paymentExamName").textContent =
+        "Examination: " + exam.name;
+
+    document.getElementById("paymentExamFee").textContent =
+        "Payment Amount: ৳" + Number(exam.fee || 0);
+loadStudentPaymentNumbers();
+    document.getElementById("senderNumber").value = "";
+    document.getElementById("transactionId").value = "";
+
+    hideAll();
+
+    document.getElementById("paymentFormArea").style.display = "block";
+}
+// ===================================
+// SUBMIT EXAM PAYMENT
+// ===================================
+
+
+async function submitExamPayment() {
+
+    if (!checkStudentAccess()) return;
+
+    if (!selectedPaymentExam) {
+        alert("Please select an examination.");
+        return;
+    }
+
+    const method = document.getElementById("paymentMethod").value;
+    const senderNumber = document.getElementById("senderNumber").value.trim();
+    const transactionId = document.getElementById("transactionId").value.trim();
+
+    if (!senderNumber || !transactionId) {
+        alert("Please enter your Sender Number and Transaction ID.");
+        return;
+    }
+
+    try {
+
+        // CHECK EXISTING PAYMENTS IN FIREBASE
+        const snapshot = await db.collection("payments")
+            .where("studentId", "==", currentStudent.id)
+            .get();
+
+        const alreadySubmitted = snapshot.docs.some(doc => {
+            const payment = doc.data();
+
+            return String(payment.examName) === String(selectedPaymentExam.name)
+                && payment.status !== "rejected";
+        });
+
+        if (alreadySubmitted) {
+            alert("You have already submitted a payment for this examination.");
+            return;
+        }
+
+        // CREATE PAYMENT
+        const payment = {
+            id: Date.now(),
+            studentId: currentStudent.id,
+            studentName: currentStudent.name,
+            examName: selectedPaymentExam.name,
+            amount: Number(selectedPaymentExam.fee),
+            method: method,
+            senderNumber: senderNumber,
+            transactionId: transactionId,
+            date: new Date().toLocaleString(),
+            tabSwitchWarnings: examTabWarnings,
+            status: "pending"
+        };
+
+        // SAVE TO FIREBASE
+        await db.collection("payments")
+            .doc(String(payment.id))
+            .set(payment);
+
+        alert("Payment submitted successfully! Waiting for Admin approval.");
+
+        selectedPaymentExam = null;
+
+        document.getElementById("paymentFormArea").style.display = "none";
+
+        renderExams();
+
+    } catch (error) {
+
+        console.error("PAYMENT SUBMISSION ERROR:", error);
+
+        alert("Unable to submit payment: " + error.message);
+
+    }
+}
+
+// ===================================
+// EXAM TAB SWITCH DETECTION
+// ===================================
+
+
+document.addEventListener("visibilitychange", function() {
+
+    if (document.visibilityState === "hidden") {
+
+        if (currentExam !== null && !examFinished) {
+
+            examTabWarnings++;
+
+            console.log(
+                "EXAM TAB SWITCH WARNING:",
+                examTabWarnings
+            );
+
+            alert(
+                "Warning! You switched tabs during the examination.\n" +
+                "Warning Count: " + examTabWarnings
+            );
+
+        }
+
+    }
+
+});
+function startExam(index) {
+
+    if (!checkStudentAccess()) return;
+
+    const exam = exams[index];
+
+    if (!exam) return;
+// ===================================
+// PAID EXAM PAYMENT CHECK
+// ===================================
+
+if (exam.paymentType === "paid") {
+
+    const payments = JSON.parse(
+        localStorage.getItem("rikon_payments") || "[]"
+    );
+console.log("CURRENT STUDENT ID:", currentStudent.id);
+console.log("CURRENT EXAM NAME:", exam.name);
+console.log("ALL PAYMENT RECORDS:", payments);
+    const approvedPayment = payments.find(payment =>
+        String(payment.studentId) === String(currentStudent.id) &&
+        String(payment.examName) === String(exam.name) &&
+        payment.status === "approved"
+    );
+
+    if (!approvedPayment) {
+        alert(
+            "এই পরীক্ষাটি Paid Exam। পরীক্ষা শুরু করতে আগে Payment সম্পন্ন করে Admin Approval নিতে হবে।"
+        );
+        return;
+    }
+}
+    const examQuestions = questions.filter(
+        question => Number(question.examIndex) === index
+    );
+
+    if (examQuestions.length === 0) {
+
+        alert("No questions have been added to this examination yet.");
+
+        return;
+    }
+
+    if (!confirm("Are you ready to start this examination?")) {
+        return;
+    }
+
+    currentExam = exam;
+    currentQuestions = examQuestions;
+    currentIndex = 0;
+    answers = {};
+    examFinished = false;
+examSubmitting = false;
+    remainingSeconds = Number(exam.duration) * 60;
+
+    document.getElementById("examTitle").textContent = exam.name;
+
+    hideAll();
+
+    document.getElementById("examArea").style.display = "block";
+
+    renderQuestion();
+    renderNavigation();
+    startTimer();
+}
+
+
+// =================================
+// QUESTION DISPLAY
+// =================================
+
+function renderQuestion() {
+
+    const question = currentQuestions[currentIndex];
+
+    if (!question) return;
+
+    document.getElementById("questionCounter").textContent =
+        `Question ${currentIndex + 1} of ${currentQuestions.length}`;
+
+    const display = document.getElementById("questionDisplay");
+
+    let html = `
+
+        <h3>${escapeHTML(question.text)}</h3>
+
+        <p style="margin-top:12px;color:#64748b;">
+            Marks: ${escapeHTML(question.marks)}
+        </p>
+
+    `;
+
+    if (question.type === "mcq") {
+
+        ["A", "B", "C", "D"].forEach(option => {
+
+            const selected = answers[currentIndex] === option;
+
+            html += `
+
+                <label class="option-label">
+
+                    <input
+                        type="radio"
+                        name="answer"
+                        value="${option}"
+                        ${selected ? "checked" : ""}
+                        onchange="saveMCQAnswer('${option}')"
+                    >
+
+                    ${option}. ${escapeHTML(question[option])}
+
+                </label>
+
+            `;
+
+        });
+
+    } else {
+
+        html += `
+
+            <p style="margin-top:15px;">
+                ${escapeHTML(question.instructions || "Write your answer below.")}
+            </p>
+
+            <textarea
+                id="writtenAnswer"
+                rows="7"
+                placeholder="Write your answer here..."
+                oninput="saveWrittenAnswer(this.value)"
+            >${escapeHTML(answers[currentIndex] || "")}</textarea>
+
+        `;
+    }
+
+    display.innerHTML = html;
+
+    document.getElementById("previousBtn").disabled =
+        currentIndex === 0;
+
+    document.getElementById("nextBtn").disabled =
+        currentIndex === currentQuestions.length - 1;
+}
+
+
+// =================================
+// SAVE ANSWERS
+// =================================
+
+function saveMCQAnswer(value) {
+
+    answers[currentIndex] = value;
+
+    renderNavigation();
+}
+
+function saveWrittenAnswer(value) {
+
+    answers[currentIndex] = value;
+}
+
+
+// =================================
+// QUESTION NAVIGATION
+// =================================
+
+function renderNavigation() {
+
+    const nav = document.getElementById("questionNavigation");
+
+    nav.innerHTML = currentQuestions.map((question, index) => `
+
+        <button
+            class="${answers[index] !== undefined && answers[index] !== "" ? "answered" : ""}"
+            onclick="goToQuestion(${index})"
+        >
+            ${index + 1}
+        </button>
+
+    `).join("");
+}
+
+
+function goToQuestion(index) {
+
+    if (index < 0 || index >= currentQuestions.length) return;
+
+    currentIndex = index;
+
+    renderQuestion();
+    renderNavigation();
+}
+
+
+function previousQuestion() {
+
+    if (currentIndex > 0) {
+
+        currentIndex--;
+
+        renderQuestion();
+        renderNavigation();
+    }
+}
+
+
+function nextQuestion() {
+
+    if (currentIndex < currentQuestions.length - 1) {
+
+        currentIndex++;
+
+        renderQuestion();
+        renderNavigation();
+    }
+}
+
+
+// =================================
+// TIMER
+// =================================
+
+function startTimer() {
+
+    clearInterval(timerInterval);
+
+    updateTimer();
+
+    timerInterval = setInterval(() => {
+
+        if (!checkStudentAccess()) return;
+
+        remainingSeconds--;
+
+        updateTimer();
+
+        if (remainingSeconds <= 0) {
+
+            clearInterval(timerInterval);
+
+            alert("Time is over! Your examination is being submitted.");
+
+            finishExam();
+        }
+
+    }, 1000);
+}
+
+
+function updateTimer() {
+
+    const minutes = Math.floor(remainingSeconds / 60);
+
+    const seconds = remainingSeconds % 60;
+
+    document.getElementById("timer").textContent =
+        `Time Remaining: ${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+
+// =================================
+// SUBMIT EXAM
+// =================================
+
+function submitExam() {
+
+    if (!checkStudentAccess()) return;
+
+    if (examFinished) return;
+
+    const unanswered = currentQuestions.filter((question, index) => {
+
+    const answer = answers[index];
+
+    return answer === undefined ||
+           answer === null ||
+           (typeof answer === "string" && answer.trim() === "");
+
+}).length;
+    if (!confirm(
+        `You have ${unanswered} unanswered question(s). Submit examination?`
+    )) {
+        return;
+    }
+
+    finishExam();
+}
+
+
+// =================================
+// EVALUATION & SAVE RESULT
+// =================================
+
+async function finishExam() {
+
+    // PREVENT DUPLICATE SUBMISSION
+    if (examFinished || examSubmitting) return;
+
+    examSubmitting = true;
+    examFinished = true;
+
+    clearInterval(timerInterval);
+
+    let correct = 0;
+    let wrong = 0;
+    let attempted = 0;
+    let writtenCount = 0;
+    let obtainedMarks = 0;
+
+    currentQuestions.forEach((question, index) => {
+
+        const answer = answers[index];
+
+        if (question.type === "mcq") {
+
+            if (answer !== undefined && answer !== "") {
+
+                attempted++;
+
+                if (answer === question.correct) {
+
+                    correct++;
+
+                    obtainedMarks += Number(question.marks);
+
+                } else {
+
+                    wrong++;
+
+                    obtainedMarks -= Number(currentExam.negative || 0);
+                }
+            }
+
+        } else {
+
+            if (
+                answer !== undefined &&
+                typeof answer === "string" &&
+                answer.trim() !== ""
+            ) {
+                writtenCount++;
+            }
+        }
+
+    });
+
+    const totalMarks = Number(currentExam.marks);
+console.log("FINAL TAB WARNING COUNT:", examTabWarnings);
+    const result = {
+
+        id: Date.now(),
+
+        studentId: currentStudent.id,
+
+        studentName: currentStudent.name,
+
+        studentEmail: currentStudent.email,
+
+        examName: currentExam.name,
+
+        date: new Date().toLocaleString(),
+tabSwitchWarnings: examTabWarnings,
+        correct: correct,
+
+        wrong: wrong,
+
+        attempted: attempted,
+
+        writtenCount: writtenCount,
+
+        obtainedMarks: Number(obtainedMarks.toFixed(2)),
+
+        totalMarks: totalMarks,
+
+        writtenEvaluations: {},
+
+        answers: currentQuestions.map((question, index) => ({
+
+            question: question.text,
+
+            type: question.type,
+
+            answer: answers[index] || "",
+
+            correct: question.type === "mcq" ? question.correct : null,
+
+            marks: question.marks
+
+        }))
+
+    };
+
+    let allResults = [];
+
+        // SAVE RESULT TO FIREBASE
+
+    try {
+
+        await db.collection("results")
+            .doc(String(result.id))
+            .set(result);
+
+        console.log("RESULT SAVED TO FIREBASE:", result.id);
+
+    } catch (error) {
+
+        console.error("RESULT SAVE ERROR:", error);
+
+        alert("Result could not be saved. Please contact the administrator.");
+
+        examFinished = false;
+examSubmitting = false;
+        return;
+    }
+    document.getElementById("examArea").style.display = "none";
+
+    document.getElementById("resultArea").style.display = "block";
+
+    document.getElementById("resultContent").innerHTML = `
+
+        <h3>${escapeHTML(result.examName)}</h3>
+
+        <p><strong>Student:</strong> ${escapeHTML(result.studentName)}</p>
+
+        <p><strong>Email:</strong> ${escapeHTML(result.studentEmail)}</p>
+
+        <p>Correct Answers: ${correct}</p>
+
+        <p>Wrong Answers: ${wrong}</p>
+
+        <p>Attempted MCQ: ${attempted}</p>
+
+        <p>Written Answers Submitted: ${writtenCount}</p>
+
+        <h2 style="margin-top:15px;">
+            MCQ Marks: ${result.obtainedMarks}
+        </h2>
+
+        <p>Total Exam Marks: ${totalMarks}</p>
+
+        <p style="margin-top:12px;color:#64748b;">
+            Written answers are awaiting teacher evaluation.
+        </p>
+
+    `;
+
+    renderExamReminder();
+}
+
+
+// =================================
+// STUDENT RESULTS
+// =================================
+// ===================================
+// STUDENT PAYMENT HISTORY
+// ===================================
+
+
+async function showPaymentHistory() {
+
+    const container = document.getElementById("dashboardContent");
+
+    container.innerHTML = `
+        <h2>💳 My Payment History</h2>
+        <p>Loading payment history...</p>
+    `;
+
+    try {
+
+        // LOAD CURRENT STUDENT PAYMENTS FROM FIREBASE
+        const snapshot = await db.collection("payments")
+            .where("studentId", "==", currentStudent.id)
+            .get();
+
+        const myPayments = snapshot.docs
+            .map(doc => doc.data())
+            .sort((a, b) => Number(b.id || 0) - Number(a.id || 0));
+
+        if (myPayments.length === 0) {
+
+            container.innerHTML = `
+                <h2>💳 My Payment History</h2>
+                <p>No payment history available yet.</p>
+            `;
+
+            return;
+        }
+
+        container.innerHTML = `
+
+            <h2>💳 My Payment History</h2>
+
+            ${myPayments.map(payment => `
+
+                <div class="exam-card" style="margin-top:15px;">
+
+                    <h3>${escapeHTML(payment.examName || "Unknown Exam")}</h3>
+
+                    <p><strong>Amount:</strong> ৳${Number(payment.amount || 0)}</p>
+
+                    <p><strong>Payment Method:</strong> ${escapeHTML(payment.method || "N/A")}</p>
+
+                    <p><strong>Transaction ID:</strong> ${escapeHTML(payment.transactionId || "N/A")}</p>
+
+                    <p><strong>Sender Number:</strong> ${escapeHTML(payment.senderNumber || "N/A")}</p>
+
+                    <p><strong>Payment Date:</strong> ${escapeHTML(payment.date || "N/A")}</p>
+
+                    <p>
+                        <strong>Status:</strong>
+                        <span style="
+                            color:${
+                                payment.status === "approved"
+                                    ? "#16a34a"
+                                    : payment.status === "rejected"
+                                    ? "#dc2626"
+                                    : "#d97706"
+                            };
+                            font-weight:bold;
+                        ">
+                            ${escapeHTML(payment.status || "pending").toUpperCase()}
+                        </span>
+                    </p>
+
+                </div>
+
+            `).join("")}
+
+        `;
+
+    } catch (error) {
+
+        console.error("PAYMENT HISTORY LOADING ERROR:", error);
+
+        container.innerHTML = `
+            <h2>💳 My Payment History</h2>
+            <p>Unable to load payment history: ${escapeHTML(error.message)}</p>
+        `;
+
+    }
+}
+
+// ===================================
+// STUDENT NOTIFICATION SYSTEM
+// ===================================
+
+
+async function showNotifications() {
+
+    const container = document.getElementById("dashboardContent");
+
+    container.innerHTML = `
+        <h2>🔔 Notifications</h2>
+        <p>Loading notifications...</p>
+    `;
+
+    try {
+
+        // LOAD PAYMENTS FROM FIREBASE
+        const paymentSnapshot = await db.collection("payments")
+            .where("studentId", "==", currentStudent.id)
+            .get();
+
+        const payments = paymentSnapshot.docs.map(doc => doc.data());
+
+        // LOAD NOTICES FROM FIREBASE
+        const noticeSnapshot = await db.collection("notices").get();
+
+        const notices = noticeSnapshot.docs.map(doc => doc.data());
+
+        // PAYMENT NOTIFICATIONS
+        const paymentNotifications = payments.map(payment => {
+
+            let title = "Payment Pending";
+            let message = "Your payment is waiting for Admin approval.";
+            let color = "#d97706";
+            let icon = "⏳";
+
+            if (payment.status === "approved") {
+                title = "Payment Approved";
+                message = "Your payment has been approved. You can now start the examination.";
+                color = "#16a34a";
+                icon = "✅";
+            }
+
+            if (payment.status === "rejected") {
+                title = "Payment Rejected";
+                message = "Your payment was rejected. Please contact the Admin.";
+                color = "#dc2626";
+                icon = "❌";
+            }
+
+            return `
+                <div class="exam-card" style="margin-top:15px; border-left:5px solid ${color};">
+                    <h3 style="color:${color};">${icon} ${title}</h3>
+                    <p>${escapeHTML(message)}</p>
+                    <p><strong>Exam:</strong> ${escapeHTML(payment.examName || "Unknown Exam")}</p>
+                    <p><strong>Amount:</strong> ৳${Number(payment.amount || 0)}</p>
+                    <p><strong>Date:</strong> ${escapeHTML(payment.date || "N/A")}</p>
+                </div>
+            `;
+        });
+
+        // NEW EXAM NOTIFICATIONS
+        const examNotifications = exams
+            .filter(exam => exam.createdAt)
+            .map(exam => `
+                <div class="exam-card" style="margin-top:15px; border-left:5px solid #7c3aed;">
+
+                    <h3 style="color:#7c3aed;">
+                        📝 New Examination Published
+                    </h3>
+
+                    <p><strong>Exam:</strong> ${escapeHTML(exam.name)}</p>
+
+                    <p><strong>Category:</strong> ${escapeHTML(exam.category || "N/A")}</p>
+
+                    <p><strong>Date:</strong> ${escapeHTML(exam.date || "N/A")}</p>
+
+                    <p><strong>Duration:</strong> ${Number(exam.duration || 0)} Minutes</p>
+
+                    <p><strong>Published:</strong> ${new Date(exam.createdAt).toLocaleString()}</p>
+
+                </div>
+            `);
+
+        // NOTICE NOTIFICATIONS
+        const noticeNotifications = notices.map(notice => `
+            <div class="exam-card" style="margin-top:15px; border-left:5px solid #2563eb;">
+
+                <h3 style="color:#2563eb;">
+                    📢 ${escapeHTML(notice.title || "New Announcement")}
+                </h3>
+
+                <p>${escapeHTML(notice.description || "")}</p>
+
+                <p><strong>Priority:</strong> ${escapeHTML(notice.priority || "Normal")}</p>
+
+                <p><strong>Date:</strong> ${escapeHTML(notice.date || "N/A")}</p>
+
+            </div>
+        `);
+
+        // COMBINE ALL NOTIFICATIONS
+        const allNotifications = [
+            ...paymentNotifications.reverse(),
+            ...noticeNotifications.reverse(),
+            ...examNotifications.reverse()
+        ];
+
+        container.innerHTML = `
+            <h2>🔔 Notifications</h2>
+
+            ${
+                allNotifications.length > 0
+                    ? allNotifications.join("")
+                    : "<p>No notifications available yet.</p>"
+            }
+        `;
+
+    } catch (error) {
+
+        console.error("NOTIFICATION LOADING ERROR:", error);
+
+        container.innerHTML = `
+            <h2>🔔 Notifications</h2>
+            <p>Unable to load notifications: ${escapeHTML(error.message)}</p>
+        `;
+
+    }
+}
+
+
+async function showResults() {
+
+    const container = document.getElementById("dashboardContent");
+
+    container.innerHTML = `
+        <h2>My Results</h2>
+        <p>Loading your results...</p>
+    `;
+
+    try {
+
+        // LOAD STUDENT RESULTS FROM FIREBASE
+        const snapshot = await db.collection("results")
+            .where("studentId", "==", currentStudent.id)
+            .get();
+
+        const results = snapshot.docs.map(doc => doc.data());
+
+        if (results.length === 0) {
+
+            container.innerHTML = `
+                <h2>My Results</h2>
+                <p>No examination results available yet.</p>
+            `;
+
+            return;
+        }
+
+        container.innerHTML = `
+
+            <h2>My Results</h2>
+
+            ${results.map(result => {
+
+                const evaluations = result.writtenEvaluations || {};
+
+                const writtenMarks = Object.values(evaluations)
+                    .reduce((sum, value) => sum + (Number(value) || 0), 0);
+
+                const finalMarks =
+                    Number(result.obtainedMarks || 0) + writtenMarks;
+
+                const isEvaluated = Object.keys(evaluations).length > 0;
+
+                return `
+
+                    <div class="exam-card">
+
+                        <h3>${escapeHTML(result.examName || "Unknown Exam")}</h3>
+
+                        <p>Date: ${escapeHTML(result.date || "N/A")}</p>
+
+                        <p>Correct Answers: ${Number(result.correct) || 0}</p>
+
+                        <p>Wrong Answers: ${Number(result.wrong) || 0}</p>
+
+                        <p>Attempted: ${Number(result.attempted) || 0}</p>
+
+                        <hr style="margin:12px 0;">
+
+                        <p>MCQ Marks: ${Number(result.obtainedMarks) || 0}</p>
+
+                        <p>Written Answers: ${Number(result.writtenCount) || 0}</p>
+
+                        <p>Written Marks: ${writtenMarks}</p>
+
+                        <p>
+                            Evaluation Status:
+                            <strong style="color:${isEvaluated ? '#16a34a' : '#d97706'};">
+                                ${isEvaluated ? "Completed" : "Pending"}
+                            </strong>
+                        </p>
+
+                        ${isEvaluated ? `
+                            <h3 style="color:#16a34a; margin-top:12px;">
+                                Final Marks: ${finalMarks} / ${Number(result.totalMarks || 0)}
+                            </h3>
+                        ` : ""}
+
+                    </div>
+
+                `;
+
+            }).join("")}
+
+        `;
+
+    } catch (error) {
+
+        console.error("STUDENT RESULT LOADING ERROR:", error);
+
+        container.innerHTML = `
+            <h2>My Results</h2>
+            <p>Unable to load results: ${escapeHTML(error.message)}</p>
+        `;
+
+    }
+}
+
+
+
+// =================================
+// RETURN TO DASHBOARD
+// =================================
+
+function backToDashboard() {
+
+    document.getElementById("resultArea").style.display = "none";
+
+    document.getElementById("dashboardContent").style.display = "block";
+
+    renderExams();
+
+}
+
+
+// =================================
+// LOGOUT
+// =================================
+
+function logout() {
+
+    if (confirm("Are you sure you want to logout?")) {
+
+        clearInterval(timerInterval);
+
+        if (accessCheckInterval !== null) {
+            clearInterval(accessCheckInterval);
+        }
+
+        localStorage.removeItem("rikon_current_student");
+
+        window.location.href = "index.html";
+
+    }
+
+}
+
+
+// =================================
+// INITIAL LOAD
+// =================================
+
+renderExams();
+// ===================================
+// EXAM COPY / PASTE PROTECTION
+// ===================================
+
+const examArea = document.getElementById("examArea");
+
+if (examArea) {
+
+    ["copy", "cut", "paste", "contextmenu"].forEach(eventName => {
+
+        examArea.addEventListener(eventName, function(event) {
+            event.preventDefault();
+        });
+
+    });
+
+}
+</script>
+
+</body>
+</html>
