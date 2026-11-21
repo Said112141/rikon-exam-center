@@ -7,53 +7,7 @@
     <title>RIKON'S EXAM CENTER</title>
     <link rel="stylesheet" href="style.css">
 
-    <style>
-        /* EMAIL OTP SECTION */
-        .email-otp-wrapper {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .email-otp-wrapper input {
-            width: 100% !important;
-            min-width: 0;
-            max-width: 100%;
-            box-sizing: border-box;
-            display: block;
-            color: #111827 !important;
-            background: #ffffff !important;
-            padding: 12px !important;
-            font-size: 16px !important;
-        }
-
-        .email-otp-wrapper button {
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        #otpSection {
-            width: 100%;
-            box-sizing: border-box;
-            margin-top: 12px;
-        }
-
-        #studentOtp {
-            width: 100%;
-            box-sizing: border-box;
-            padding: 12px;
-            font-size: 16px;
-        }
-    </style>
     <!-- FIREBASE SDK -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
-<!-- FIREBASE CONFIG -->
-<script src="firebase-config.js"></script>
-<!-- FIREBASE SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -75,8 +29,8 @@
             <h2>Welcome to RIKON'S EXAM CENTER</h2>
             <p>Prepare yourself and achieve your goals.</p>
 
-            <button onclick="showLogin()">Student Login</button>
-            <button onclick="showRegister()">Create Account</button>
+            <button class="btn-primary" onclick="showLogin()">Student Login</button>
+            <button class="btn-secondary" onclick="showRegister()">Create Account</button>
         </section>
 
        
@@ -122,38 +76,12 @@
 
                 <label>Email Address</label>
 
-                <div class="email-otp-wrapper">
-
-                    <input
-                        type="email"
-                        id="studentEmail"
-                        placeholder="Enter your email address"
-                        required
-                    >
-
-                    <button type="button" id="sendOtpBtn">
-                        Send OTP
-                    </button>
-
-                </div>
-
-                <div id="otpSection" style="display:none;">
-
-                    <input
-                        type="text"
-                        id="studentOtp"
-                        placeholder="Enter 4-digit OTP"
-                        maxlength="4"
-                        inputmode="numeric"
-                    >
-
-                    <button type="button" id="verifyOtpBtn">
-                        Verify OTP
-                    </button>
-
-                    <p id="otpMessage"></p>
-
-                </div>
+                <input
+                    type="email"
+                    id="studentEmail"
+                    placeholder="Enter your email address"
+                    required
+                >
 
                 <label>Mobile Number</label>
 
@@ -209,216 +137,56 @@
 
         }
 
-        // GET REGISTERED STUDENTS
-        function getStudents() {
+        // AUTH FLOW GUARD + AUTO-REDIRECT FOR ALREADY SIGNED-IN STUDENTS
+        let authFlowInProgress = false;
 
-            try {
+        auth.onAuthStateChanged(async function(user) {
 
-                const students = JSON.parse(
-                    localStorage.getItem("rikon_students") || "[]"
-                );
-
-                return Array.isArray(students) ? students : [];
-
-            } catch (error) {
-
-                return [];
-
-            }
-
-        }
-
-
-        // EMAIL OTP VERIFICATION
-
-        let emailVerified = false;
-        let verifiedEmail = "";
-
-        const sendOtpBtn = document.getElementById("sendOtpBtn");
-        const verifyOtpBtn = document.getElementById("verifyOtpBtn");
-
-        const otpSection = document.getElementById("otpSection");
-        const otpMessage = document.getElementById("otpMessage");
-
-        const studentEmail = document.getElementById("studentEmail");
-        const studentOtp = document.getElementById("studentOtp");
-
-        // SEND OTP
-        sendOtpBtn.addEventListener("click", async function() {
-
-            const email = studentEmail.value.trim().toLowerCase();
-
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-
-                otpSection.style.display = "block";
-
-                otpMessage.style.color = "red";
-                otpMessage.textContent = "Enter a valid email address!";
-
+            if (authFlowInProgress) {
                 return;
-
             }
 
-            sendOtpBtn.disabled = true;
-            sendOtpBtn.textContent = "Sending...";
+            if (!user) {
+                return;
+            }
 
             try {
 
-                const response = await fetch(
-                    "http://localhost:3000/api/send-otp",
-                    {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({
-                            email: email
-                        })
-                    }
-                );
+                const studentDoc = await db.collection("students")
+                    .doc(user.uid)
+                    .get();
 
-                const data = await response.json();
-
-                otpSection.style.display = "block";
-
-                if (data.success) {
-
-                    emailVerified = false;
-                    verifiedEmail = "";
-
-                    studentEmail.disabled = true;
-
-                    studentOtp.disabled = false;
-                    studentOtp.value = "";
-
-                    verifyOtpBtn.disabled = false;
-                    verifyOtpBtn.textContent = "Verify OTP";
-
-                    otpMessage.style.color = "green";
-                    otpMessage.textContent =
-                        "OTP sent successfully! Check your email.";
-
-                    let seconds = 60;
-
-                    sendOtpBtn.textContent = "Resend in 60s";
-
-                    const countdown = setInterval(function() {
-
-                        seconds--;
-
-                        if (seconds <= 0) {
-
-                            clearInterval(countdown);
-
-                            sendOtpBtn.disabled = false;
-                            sendOtpBtn.textContent = "Resend OTP";
-
-                        } else {
-
-                            sendOtpBtn.textContent =
-                                "Resend in " + seconds + "s";
-
-                        }
-
-                    }, 1000);
-
-                } else {
-
-                    otpMessage.style.color = "red";
-                    otpMessage.textContent = data.message;
-
-                    sendOtpBtn.disabled = false;
-                    sendOtpBtn.textContent = "Send OTP";
-
+                if (!studentDoc.exists) {
+                    return;
                 }
 
+                const student = studentDoc.data();
+
+                if (student.status !== "active") {
+                    return;
+                }
+
+                if (Number(student.restrictedUntil || 0) > Date.now()) {
+                    return;
+                }
+
+                if (
+                    student.verificationMethod === "firebase-email" &&
+                    !user.emailVerified
+                ) {
+                    return;
+                }
+
+                window.location.href = "student-dashboard.html";
+
             } catch (error) {
 
-                otpMessage.style.color = "red";
-                otpMessage.textContent = "Backend connection failed!";
-
-                sendOtpBtn.disabled = false;
-                sendOtpBtn.textContent = "Send OTP";
+                console.error("Auth State Check Failed:", error);
 
             }
 
         });
 
-
-        // VERIFY OTP
-        verifyOtpBtn.addEventListener("click", async function() {
-
-            const email = studentEmail.value.trim().toLowerCase();
-            const otp = studentOtp.value.trim();
-
-            if (!/^\d{4}$/.test(otp)) {
-
-                otpMessage.style.color = "red";
-                otpMessage.textContent = "Enter a valid 4-digit OTP!";
-
-                return;
-
-            }
-
-            verifyOtpBtn.disabled = true;
-            verifyOtpBtn.textContent = "Verifying...";
-
-            try {
-
-                const response = await fetch(
-                    "http://localhost:3000/api/verify-otp",
-                    {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({
-                            email: email,
-                            otp: otp
-                        })
-                    }
-                );
-
-                const data = await response.json();
-
-                if (data.success) {
-
-                    emailVerified = true;
-                    verifiedEmail = email;
-
-                    otpMessage.style.color = "green";
-                    otpMessage.textContent =
-                        "Email verified successfully!";
-
-                    verifyOtpBtn.textContent = "Verified";
-
-                    studentOtp.disabled = true;
-                    verifyOtpBtn.disabled = true;
-
-                } else {
-
-                    otpMessage.style.color = "red";
-                    otpMessage.textContent = data.message;
-
-                    verifyOtpBtn.disabled = false;
-                    verifyOtpBtn.textContent = "Verify OTP";
-
-                }
-
-            } catch (error) {
-
-                otpMessage.style.color = "red";
-                otpMessage.textContent = "Backend connection failed!";
-
-                verifyOtpBtn.disabled = false;
-                verifyOtpBtn.textContent = "Verify OTP";
-
-            }
-
-        });
-
-
-        
 // STUDENT REGISTRATION
 document.getElementById("registerForm").addEventListener("submit", async function(event) {
 
@@ -430,9 +198,9 @@ document.getElementById("registerForm").addEventListener("submit", async functio
     const password = document.getElementById("studentPassword").value;
     const message = document.getElementById("registerMessage");
 
-    if (!emailVerified || verifiedEmail !== email) {
+    if (!name) {
         message.style.color = "red";
-        message.textContent = "Please verify your email before creating an account!";
+        message.textContent = "Please enter your full name!";
         return;
     }
 
@@ -449,6 +217,8 @@ document.getElementById("registerForm").addEventListener("submit", async functio
         message.textContent = "Password must contain at least 6 characters!";
         return;
     }
+
+    authFlowInProgress = true;
 
     try {
         message.style.color = "blue";
@@ -471,29 +241,49 @@ document.getElementById("registerForm").addEventListener("submit", async functio
             status: "active",
             restrictedUntil: 0,
             restrictionReason: "",
+            emailVerified: false,
+            verificationMethod: "firebase-email",
             createdAt: Date.now()
         };
 
-        await db.collection("students")
-            .doc(user.uid)
-            .set(newStudent);
+        try {
 
-        // SAVE CURRENT SESSION INFORMATION
-        localStorage.setItem(
-            "rikon_current_student",
-            JSON.stringify({
-                id: user.uid,
-                name: name,
-                email: email,
-                phone: phone
-            })
-        );
+            // SEND FIREBASE EMAIL VERIFICATION LINK
+            await user.sendEmailVerification();
 
-        alert("Account created successfully!");
+            await db.collection("students")
+                .doc(user.uid)
+                .set(newStudent);
 
-        window.location.href = "student-dashboard.html";
+        } catch (writeError) {
+
+            // ROLLBACK: REMOVE THE AUTH ACCOUNT SO NO ORPHAN LOGIN REMAINS
+            try {
+                await user.delete();
+            } catch (deleteError) {
+                console.error("Registration Rollback Failed:", deleteError);
+            }
+
+            throw writeError;
+
+        }
+
+        // DO NOT LOG IN YET: THE STUDENT MUST VERIFY THE EMAIL FIRST
+        await auth.signOut();
+
+        localStorage.removeItem("rikon_current_student");
+
+        authFlowInProgress = false;
+
+        document.getElementById("registerForm").reset();
+
+        message.style.color = "green";
+        message.textContent =
+            "Account created successfully! A verification link has been sent to your email. Please verify your email, then login.";
 
     } catch (error) {
+        authFlowInProgress = false;
+
         console.error("Student Registration Failed:", error);
 
         message.style.color = "red";
@@ -521,6 +311,8 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
     const password = document.getElementById("loginPassword").value;
     const message = document.getElementById("loginMessage");
 
+    authFlowInProgress = true;
+
     try {
         message.style.color = "blue";
         message.textContent = "Logging in...";
@@ -541,6 +333,10 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
         if (!studentDoc.exists) {
             await auth.signOut();
 
+            localStorage.removeItem("rikon_current_student");
+
+            authFlowInProgress = false;
+
             message.style.color = "red";
             message.textContent = "Student account data not found!";
             return;
@@ -551,6 +347,10 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
         // CHECK BLOCK STATUS
         if (student.status === "blocked") {
             await auth.signOut();
+
+            localStorage.removeItem("rikon_current_student");
+
+            authFlowInProgress = false;
 
             message.style.color = "red";
             message.textContent =
@@ -563,12 +363,51 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
         if (Number(student.restrictedUntil || 0) > Date.now()) {
             await auth.signOut();
 
+            localStorage.removeItem("rikon_current_student");
+
+            authFlowInProgress = false;
+
             message.style.color = "red";
             message.textContent =
                 "Your account is temporarily restricted. Reason: " +
                 (student.restrictionReason || "Not specified");
 
             return;
+        }
+
+        // CHECK FIREBASE EMAIL VERIFICATION (NEW ACCOUNTS ONLY;
+        // LEGACY ACCOUNTS WITHOUT verificationMethod LOG IN AS BEFORE)
+        if (student.verificationMethod === "firebase-email") {
+
+            try {
+                await user.reload();
+            } catch (reloadError) {
+                console.error("Email Verification Check Failed:", reloadError);
+            }
+
+            const currentUser = auth.currentUser || user;
+
+            if (!currentUser.emailVerified) {
+
+                try {
+                    await currentUser.sendEmailVerification();
+                } catch (resendError) {
+                    console.error("Verification Resend Failed:", resendError);
+                }
+
+                await auth.signOut();
+
+                localStorage.removeItem("rikon_current_student");
+
+                authFlowInProgress = false;
+
+                message.style.color = "red";
+                message.textContent =
+                    "Please verify your email before logging in. A new verification link has been sent to your email. Verify your email, then login again.";
+
+                return;
+            }
+
         }
 
         // SAVE CURRENT STUDENT SESSION
@@ -587,6 +426,8 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
         window.location.href = "student-dashboard.html";
 
     } catch (error) {
+        authFlowInProgress = false;
+
         console.error("Student Login Failed:", error);
 
         message.style.color = "red";

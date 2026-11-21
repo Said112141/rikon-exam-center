@@ -512,7 +512,7 @@
 
     <div id="resultContent" class="result-box"></div>
 
-    <button onclick="backToDashboard()">
+    <button class="btn-danger" onclick="backToDashboard()">
         Back to Dashboard
     </button>
 
@@ -532,12 +532,15 @@
 
 let currentStudent = null;
 let registeredStudent = null;
+let isLoggingOut = false;
 
 // VERIFY STUDENT USING FIREBASE
 auth.onAuthStateChanged(async function(user) {
 
     if (!user) {
-        alert("Please login first.");
+        if (!isLoggingOut) {
+            alert("Please login first.");
+        }
         window.location.replace("index.html");
         return;
     }
@@ -917,6 +920,11 @@ function toggleStudentMenu() {
     }
 }
 function showSection(section) {
+
+    if (isStudentExamActive) {
+        alert("Your exam is currently running. Please submit the exam before going back.");
+        return;
+    }
 
     if (!checkStudentAccess()) return;
 
@@ -1417,7 +1425,7 @@ if (updatedMessage) {
     }
 }
 
-function changeStudentPassword() {
+async function changeStudentPassword() {
 
     if (!checkStudentAccess()) return;
 
@@ -1450,53 +1458,52 @@ function changeStudentPassword() {
         return;
     }
 
-    let students = [];
-
-    try {
-        students = JSON.parse(
-            localStorage.getItem("rikon_students") || "[]"
-        );
-
-        if (!Array.isArray(students)) students = [];
-
-    } catch(error) {
-        message.textContent = "Unable to load student accounts.";
-        return;
-    }
-
-    const studentIndex = students.findIndex(
-        student =>
-            String(student.id) === String(currentStudent.id)
-    );
-
-    if (studentIndex === -1) {
-        message.textContent = "Student account not found.";
-        return;
-    }
-
-    if (students[studentIndex].password !== currentPassword) {
-        message.textContent = "Current password is incorrect.";
-        return;
-    }
-
     if (currentPassword === newPassword) {
         message.textContent = "New password must be different.";
         return;
     }
 
-    students[studentIndex].password = newPassword;
+    const user = auth.currentUser;
 
-    localStorage.setItem(
-        "rikon_students",
-        JSON.stringify(students)
-    );
+    if (!user || !user.email) {
+        message.textContent = "You are not signed in. Please login again.";
+        return;
+    }
 
-    document.getElementById("currentPassword").value = "";
-    document.getElementById("newPassword").value = "";
-    document.getElementById("confirmPassword").value = "";
+    try {
+        const credential = firebase.auth.EmailAuthProvider.credential(
+            user.email,
+            currentPassword
+        );
 
-    message.style.color = "green";
-    message.textContent = "Password changed successfully!";
+        await user.reauthenticateWithCredential(credential);
+
+        await user.updatePassword(newPassword);
+
+        document.getElementById("currentPassword").value = "";
+        document.getElementById("newPassword").value = "";
+        document.getElementById("confirmPassword").value = "";
+
+        message.style.color = "green";
+        message.textContent = "Password changed successfully!";
+
+    } catch (error) {
+
+        console.error("PASSWORD CHANGE ERROR:", error);
+
+        if (error.code === "auth/wrong-password" || error.code === "auth/invalid-credential") {
+            message.textContent = "Current password is incorrect.";
+        } else if (error.code === "auth/weak-password") {
+            message.textContent = "New password is too weak. Please use a stronger password.";
+        } else if (error.code === "auth/requires-recent-login") {
+            message.textContent = "Please logout and login again, then try changing your password.";
+        } else if (error.code === "auth/too-many-requests") {
+            message.textContent = "Too many attempts. Please wait a while and try again.";
+        } else {
+            message.textContent = "Unable to change password: " + error.message;
+        }
+
+    }
 }
 
 
@@ -1539,6 +1546,26 @@ document.addEventListener("visibilitychange", function() {
                 "EXAM TAB SWITCH WARNING:",
                 examTabWarnings
             );
+
+            if (examTabWarnings >= 3) {
+
+                console.log("EXAM AUTO-SUBMITTED AFTER 3 TAB SWITCH WARNINGS");
+
+                finishExam();
+
+                return;
+            }
+
+            if (examTabWarnings === 2) {
+
+                alert(
+                    "Warning! You switched tabs during the examination.\n" +
+                    "Warning Count: " + examTabWarnings + "\n" +
+                    "If you switch tabs one more time, your exam will be submitted automatically."
+                );
+
+                return;
+            }
 
             alert(
                 "Warning! You switched tabs during the examination.\n" +
@@ -1619,6 +1646,51 @@ if (!hasApprovedEnrollment && !hasActiveSubscription) {
             return;
         }
 
+        // EXAM SCHEDULE CHECK: block before the scheduled start time.
+        // exam.date is stored by admin as a datetime-local string.
+        if (exam.date) {
+            const examStartTime = new Date(exam.date).getTime();
+
+            if (Number.isFinite(examStartTime) && Date.now() < examStartTime) {
+                alert(
+                    "This exam has not started yet.\n" +
+                    "Scheduled start: " + new Date(examStartTime).toLocaleString() + "\n" +
+                    "Please come back at the scheduled time."
+                );
+                return;
+            }
+        }
+
+        // ONE ATTEMPT ONLY: block if this student already has a result
+        // for this exam. Result docs store studentId, examName and
+        // courseId (newer results also store examId), so match on those.
+        try {
+            const resultSnapshot = await db.collection("results")
+                .where("studentId", "==", currentStudent.id)
+                .get();
+
+            const examDisplayName = exam.name || exam.title || "";
+
+            const alreadyAttempted = resultSnapshot.docs.some(doc => {
+                const prev = doc.data();
+
+                if (prev.examId) {
+                    return String(prev.examId) === String(examId);
+                }
+
+                return String(prev.courseId || "") === String(courseId) &&
+                    String(prev.examName || "") === String(examDisplayName);
+            });
+
+            if (alreadyAttempted) {
+                alert("You have already attempted this exam. Only one attempt is allowed per student.");
+                return;
+            }
+
+        } catch (attemptError) {
+            console.error("ATTEMPT CHECK ERROR:", attemptError);
+        }
+
         const examQuestions = questions.filter(question =>
             String(question.examId || "") === String(examId)
         );
@@ -1653,7 +1725,34 @@ function beginExamSession(exam, examQuestions) {
         return;
     }
 
-    if (!confirm("Are you ready to start this examination?")) {
+    // DURATION GUARD
+    const examDurationMinutes = Number(exam.duration);
+
+    if (!Number.isFinite(examDurationMinutes) || examDurationMinutes <= 0) {
+        alert("Exam duration is not set — contact admin");
+        return;
+    }
+
+    // EXAM SESSION RESTORE (sessionStorage)
+    const examSessionId = exam.id || exam.firestoreId || null;
+    const savedSession = loadExamSession();
+    let restoreSession = null;
+
+    if (
+        savedSession &&
+        currentStudent &&
+        String(savedSession.studentId || "") === String(currentStudent.id) &&
+        String(savedSession.examId || "") === String(examSessionId || "") &&
+        savedSession.answers
+    ) {
+        if (confirm("You have an unfinished attempt for this exam. Press OK to resume where you left off, or Cancel to start fresh.")) {
+            restoreSession = savedSession;
+        } else {
+            clearExamSession();
+        }
+    }
+
+    if (!restoreSession && !confirm("Are you ready to start this examination?")) {
         return;
     }
 if (!isStudentBackNavigation && currentStudentView) {
@@ -1662,12 +1761,16 @@ if (!isStudentBackNavigation && currentStudentView) {
     currentExam = exam;
     isStudentExamActive = true;
     currentQuestions = examQuestions;
-    currentIndex = 0;
-    answers = {};
+    currentIndex = restoreSession
+        ? Math.min(Math.max(Number(restoreSession.currentIndex) || 0, 0), examQuestions.length - 1)
+        : 0;
+    answers = restoreSession ? (restoreSession.answers || {}) : {};
     examFinished = false;
     examSubmitting = false;
-    examTabWarnings = 0;
-    remainingSeconds = Number(exam.duration) * 60;
+    examTabWarnings = restoreSession ? (Number(restoreSession.tabWarnings) || 0) : 0;
+    remainingSeconds = restoreSession && Number(restoreSession.remainingSeconds) > 0
+        ? Math.floor(Number(restoreSession.remainingSeconds))
+        : examDurationMinutes * 60;
 
     document.getElementById("examTitle").textContent = exam.name;
     hideAll();
@@ -1676,6 +1779,7 @@ if (!isStudentBackNavigation && currentStudentView) {
     renderQuestion();
     renderNavigation();
     startTimer();
+    saveExamSession();
 }
 
 
@@ -1766,12 +1870,60 @@ function saveMCQAnswer(value) {
 
     answers[currentIndex] = value;
 
+    saveExamSession();
+
     renderNavigation();
 }
 
 function saveWrittenAnswer(value) {
 
     answers[currentIndex] = value;
+
+    saveExamSession();
+}
+
+
+// =================================
+// EXAM SESSION PERSISTENCE (sessionStorage)
+// =================================
+
+const EXAM_SESSION_KEY = "rikon_exam_session";
+
+function saveExamSession() {
+    try {
+        if (!currentExam || examFinished || !currentStudent) return;
+
+        sessionStorage.setItem(EXAM_SESSION_KEY, JSON.stringify({
+            examId: currentExam.id || currentExam.firestoreId || null,
+            courseId: currentExam.courseId || null,
+            examName: currentExam.name || "",
+            studentId: currentStudent.id,
+            answers: answers,
+            currentIndex: currentIndex,
+            remainingSeconds: remainingSeconds,
+            tabWarnings: examTabWarnings,
+            savedAt: Date.now()
+        }));
+    } catch (error) {
+        console.error("EXAM SESSION SAVE ERROR:", error);
+    }
+}
+
+function loadExamSession() {
+    try {
+        const raw = sessionStorage.getItem(EXAM_SESSION_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch (error) {
+        return null;
+    }
+}
+
+function clearExamSession() {
+    try {
+        sessionStorage.removeItem(EXAM_SESSION_KEY);
+    } catch (error) {
+        // sessionStorage unavailable; nothing to clear.
+    }
 }
 
 
@@ -1848,6 +2000,10 @@ function startTimer() {
         remainingSeconds--;
 
         updateTimer();
+
+        if (remainingSeconds % 10 === 0) {
+            saveExamSession();
+        }
 
         if (remainingSeconds <= 0) {
 
@@ -1959,7 +2115,16 @@ isStudentExamActive = false;
 
     });
 
-    const totalMarks = Number(currentExam.marks);
+    const questionsTotalMarks = currentQuestions.reduce(
+        (sum, question) => sum + (Number(question.marks) || 0),
+        0
+    );
+
+    const totalMarks = questionsTotalMarks > 0
+        ? Number(questionsTotalMarks.toFixed(2))
+        : (Number(currentExam.marks) || 0);
+
+    obtainedMarks = Math.max(0, obtainedMarks);
 console.log("FINAL TAB WARNING COUNT:", examTabWarnings);
     const result = {
 
@@ -1972,6 +2137,7 @@ console.log("FINAL TAB WARNING COUNT:", examTabWarnings);
         studentEmail: currentStudent.email,
 
         examName: currentExam.name,
+examId: currentExam.id || currentExam.firestoreId || null,
 courseId: currentExam.courseId || null,
         date: new Date().toLocaleString(),
 tabSwitchWarnings: examTabWarnings,
@@ -2016,6 +2182,8 @@ tabSwitchWarnings: examTabWarnings,
             .set(result);
 
         console.log("RESULT SAVED TO FIREBASE:", result.id);
+
+        clearExamSession();
 
     } catch (error) {
 
@@ -2303,8 +2471,7 @@ async function showResults() {
             .get();
 
         const results = snapshot.docs
-    .map(doc => doc.data())
-    .filter(result => result.courseId);
+    .map(doc => doc.data());
 // LOAD COURSE NAMES
 const courseSnapshot = await db.collection("courses").get();
 
@@ -2318,7 +2485,7 @@ courseSnapshot.forEach(doc => {
 const groupedResults = {};
 
 results.forEach(result => {
-    const courseId = String(result.courseId);
+    const courseId = result.courseId ? String(result.courseId) : "no-course";
 
     if (!groupedResults[courseId]) {
         groupedResults[courseId] = [];
@@ -2345,7 +2512,7 @@ results.forEach(result => {
         <div class="exam-card" style="margin-bottom:20px;">
 
             <h2 style="margin-bottom:15px;">
-                ${escapeHTML(courseMap[courseId] || "Unknown Course")}
+                ${escapeHTML(courseMap[courseId] || (courseId === "no-course" ? "Other Exams" : "Unknown Course"))}
             </h2>
 
             ${courseResults.map(result => {
@@ -2360,7 +2527,7 @@ results.forEach(result => {
 
                 const isEvaluated =
     Number(result.writtenCount || 0) === 0 ||
-    Object.keys(evaluations).length > 0;
+    Object.keys(evaluations).length >= Number(result.writtenCount || 0);
 
                 return `
 
@@ -2445,7 +2612,7 @@ function backToDashboard() {
 // LOGOUT
 // =================================
 
-function logout() {
+async function logout() {
 
     if (confirm("Are you sure you want to logout?")) {
 
@@ -2456,6 +2623,16 @@ function logout() {
         }
 
         localStorage.removeItem("rikon_current_student");
+
+        clearExamSession();
+
+        isLoggingOut = true;
+
+        try {
+            await auth.signOut();
+        } catch (error) {
+            console.error("LOGOUT ERROR:", error);
+        }
 
         window.location.href = "index.html";
 
@@ -2677,7 +2854,7 @@ async function loadStudentCoursesList() {
                     <img src="${escapeHTML(course.bannerUrl)}" alt="Banner" style="width:220px; height:130px; object-fit:cover; border-radius:8px;">
                     <div style="flex:1; min-width:200px;">
                         <h3 style="margin:0 0 10px; color:#1e293b; font-size:18px;">${escapeHTML(course.title)}</h3>
-                        <p style="margin:0 0 8px; color:#64748b;">Total Exams in Package: <strong>${course.exams.length}</strong></p>
+                        <p style="margin:0 0 8px; color:#64748b;">Total Exams in Package: <strong>${(course.exams || []).length}</strong></p>
                         <p style="margin:0 0 15px; font-size:16px;">
                             Price: <del style="color:#94a3b8;">৳${course.regularPrice}</del> 
                             <strong style="color:#2563eb; font-size:20px; margin-left:8px;">৳${course.offerPrice}</strong>
@@ -2852,6 +3029,7 @@ const subscriptionPlansHTML = plans.length
 }
 
 let selectedStudentSubscription = null;
+let subscriptionPaymentSubmitting = false;
 
 async function selectStudentSubscriptionPlan(planId, courseId) {
     try {
@@ -2977,7 +3155,7 @@ async function openSubscriptionPaymentModal() {
                 placeholder="Enter Transaction ID">
 
             <div style="display:flex;gap:10px;margin-top:20px;">
-                <button class="primary-btn"
+                <button class="primary-btn" id="submitSubscriptionBtn"
                     onclick="submitSubscriptionPayment()"
                     style="flex:1;">
                     Submit Subscription Payment
@@ -2997,6 +3175,8 @@ async function openSubscriptionPaymentModal() {
 }
 
 async function submitSubscriptionPayment() {
+    if (subscriptionPaymentSubmitting) return;
+
     if (!selectedStudentSubscription) {
         alert("Please select a subscription plan first.");
         return;
@@ -3008,10 +3188,12 @@ async function submitSubscriptionPayment() {
     const senderNumber = document.getElementById("enrollSenderNumber").value.trim();
     const transactionId = document.getElementById("enrollTrxId").value.trim();
     const msg = document.getElementById("enrollMsg");
+    const submitBtn = document.getElementById("submitSubscriptionBtn");
 
-    const finalPrice = Number(
-        document.getElementById("finalPrice").textContent
-    );
+    // Amount is computed from the subscription plan document price
+    // field (plan.price), never from the editable DOM finalPrice text.
+    const basePrice = Number(plan.price) || 0;
+    const finalPrice = Math.max(0, basePrice - (Number(appliedDiscount) || 0));
 
     if (!senderNumber || !transactionId) {
         msg.style.color = "red";
@@ -3025,7 +3207,31 @@ async function submitSubscriptionPayment() {
         return;
     }
 
+    subscriptionPaymentSubmitting = true;
+    if (submitBtn) submitBtn.disabled = true;
+
     try {
+        // DUPLICATE CHECK: same student + same course + same plan +
+        // same Transaction ID already pending.
+        const existingSnapshot = await db.collection("payments")
+            .where("studentId", "==", currentStudent.id)
+            .get();
+
+        const duplicatePending = existingSnapshot.docs.some(doc => {
+            const p = doc.data();
+            return p.status === "pending" &&
+                p.paymentType === "subscription" &&
+                String(p.courseId || "") === String(plan.courseId) &&
+                String(p.subscriptionPlanId || "") === String(plan.planId) &&
+                String(p.transactionId || "") === String(transactionId);
+        });
+
+        if (duplicatePending) {
+            msg.style.color = "red";
+            msg.textContent = "A payment with this Transaction ID is already pending for this plan. Please wait for admin approval.";
+            return;
+        }
+
         const paymentId = Date.now();
 
         const paymentData = {
@@ -3073,6 +3279,9 @@ async function submitSubscriptionPayment() {
 
         msg.style.color = "red";
         msg.textContent = "Failed to submit payment: " + error.message;
+    } finally {
+        subscriptionPaymentSubmitting = false;
+        if (submitBtn) submitBtn.disabled = false;
     }
 }
 
@@ -3289,7 +3498,7 @@ async function openEnrollmentModal(courseId, courseTitle, coursePrice) {
             <input type="text" id="enrollTrxId" placeholder="e.g., 9H87G6F5" style="margin-top:5px;">
 
             <div style="display:flex; gap:10px; margin-top:20px;">
-                <button onclick="submitCourseEnrollment('${courseId}', '${escapeHTML(courseTitle)}')" class="primary-btn" style="flex:1;">Submit Enrollment Request</button><button onclick="goBackStudentPage()" style="background:#64748b; color:white; border:none; padding:12px 20px; border-radius:7px; cursor:pointer;">← Back</button>
+                <button id="submitEnrollmentBtn" onclick="submitCourseEnrollment('${courseId}', '${escapeHTML(courseTitle)}')" class="primary-btn" style="flex:1;">Submit Enrollment Request</button><button onclick="goBackStudentPage()" style="background:#64748b; color:white; border:none; padding:12px 20px; border-radius:7px; cursor:pointer;">← Back</button>
             </div>
             <p id="enrollMsg" style="margin-top:10px;"></p>
         </div>
@@ -3323,6 +3532,7 @@ async function loadAdminPaymentNumbersForStudent() {
 }
 
 let appliedDiscount = 0;
+let enrollmentSubmitting = false;
 
 
 async function applyStudentCoupon(originalPrice, courseId) {
@@ -3429,12 +3639,13 @@ if (!["global", "course", "student"].includes(coupon.scope)) {
 
 
 async function submitCourseEnrollment(courseId, courseTitle) {
+    if (enrollmentSubmitting) return;
+
     const method = document.getElementById("enrollPaymentMethod").value;
     const senderNumber = document.getElementById("enrollSenderNumber").value.trim();
     const transactionId = document.getElementById("enrollTrxId").value.trim();
     const msg = document.getElementById("enrollMsg");
-
-    const finalPrice = Number(document.getElementById("finalPrice").textContent);
+    const submitBtn = document.getElementById("submitEnrollmentBtn");
 
     if (!senderNumber || !transactionId) {
         msg.style.color = "red";
@@ -3442,7 +3653,44 @@ async function submitCourseEnrollment(courseId, courseTitle) {
         return;
     }
 
+    enrollmentSubmitting = true;
+    if (submitBtn) submitBtn.disabled = true;
+
     try {
+        // Amount is computed from the course document price fields
+        // (offerPrice, falling back to regularPrice), never from the
+        // editable DOM finalPrice text.
+        const courseDoc = await db.collection("courses").doc(courseId).get();
+
+        if (!courseDoc.exists) {
+            msg.style.color = "red";
+            msg.textContent = "Course not found. Please refresh and try again.";
+            return;
+        }
+
+        const courseData = courseDoc.data();
+        const basePrice = Number(courseData.offerPrice ?? courseData.regularPrice) || 0;
+        const finalPrice = Math.max(0, basePrice - (Number(appliedDiscount) || 0));
+
+        // DUPLICATE CHECK: same student + same course + same
+        // Transaction ID already pending.
+        const existingSnapshot = await db.collection("payments")
+            .where("studentId", "==", currentStudent.id)
+            .get();
+
+        const duplicatePending = existingSnapshot.docs.some(doc => {
+            const p = doc.data();
+            return p.status === "pending" &&
+                String(p.courseId || "") === String(courseId) &&
+                String(p.transactionId || "") === String(transactionId);
+        });
+
+        if (duplicatePending) {
+            msg.style.color = "red";
+            msg.textContent = "A payment with this Transaction ID is already pending for this course. Please wait for admin approval.";
+            return;
+        }
+
         const paymentData = {
             id: Date.now(),
             studentId: currentStudent.id,
@@ -3465,7 +3713,7 @@ async function submitCourseEnrollment(courseId, courseTitle) {
 
         msg.style.color = "green";
         msg.textContent = "Enrollment request submitted successfully! Admin will verify and approve soon.";
-        
+
         setTimeout(() => {
     goBackStudentPage();
 }, 2500);
@@ -3474,6 +3722,9 @@ async function submitCourseEnrollment(courseId, courseTitle) {
         console.error("Enrollment error:", error);
         msg.style.color = "red";
         msg.textContent = "Failed to submit request: " + error.message;
+    } finally {
+        enrollmentSubmitting = false;
+        if (submitBtn) submitBtn.disabled = false;
     }
 }
 // পেজের যেকোনো জায়গায় ক্লিক করলে স্টুডেন্ট মেনু বন্ধ হয়ে যাবে
@@ -3516,21 +3767,6 @@ document.addEventListener("DOMContentLoaded", function() {
     loadFloatingHelplineSettings();
 
 });
-
-const helplineOptions = document.getElementById("helplineOptions");
-
-if (helplineToggle && helplineOptions) {
-    helplineToggle.addEventListener("click", function(event) {
-        event.stopPropagation();
-        helplineOptions.classList.toggle("active");
-    });
-
-    document.addEventListener("click", function(event) {
-        if (!event.target.closest("#floatingHelpline")) {
-            helplineOptions.classList.remove("active");
-        }
-    });
-}
 
 async function loadFloatingHelplineSettings() {
     try {

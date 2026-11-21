@@ -406,7 +406,7 @@ body.printing-results #results label:has(.result-select-checkbox) {
             </div>
             <div class="stat-card">
                 <p>Results Published</p>
-                <h2>0</h2>
+                <h2 id="totalResultsPublished">0</h2>
             </div>
         </div>
 
@@ -668,6 +668,7 @@ body.printing-results #results label:has(.result-select-checkbox) {
                     <h2 id="totalRevenue">৳0</h2>
                 </div>
             </div>
+            <div id="paymentsLegacyNote"></div>
             <div id="paymentList">Loading payments...</div>
         </div>
     </section>
@@ -766,6 +767,7 @@ body.printing-results #results label:has(.result-select-checkbox) {
             <div style="margin:15px 0;">
                 <button type="button" onclick="printResults()" style="background:#2563eb; color:white; padding:12px 18px; border:none; border-radius:6px; cursor:pointer;">🖨️ Print Results</button>
             </div>
+            <div id="resultsLegacyNote"></div>
             <div id="resultsList">No student results available yet.</div>
         </div>
     </section>
@@ -1154,6 +1156,18 @@ async function loadAdminCoursesList() {
     const container = document.getElementById("adminCoursesList");
     if (!container) return;
 
+    container.onclick = function(event) {
+        const deleteButton = event.target.closest('button[data-action="delete-course"]');
+        if (deleteButton) {
+            deleteAdminCourse(deleteButton.dataset.courseId);
+            return;
+        }
+        if (event.target.closest("button")) return;
+        const card = event.target.closest('[data-action="open-course"]');
+        if (!card) return;
+        openCourseDashboard(card.dataset.courseId, card.dataset.courseTitle);
+    };
+
     try {
         const snapshot = await adminDb.collection("courses").get();
         const courses = snapshot.docs.map(doc => doc.data())
@@ -1165,8 +1179,7 @@ async function loadAdminCoursesList() {
         }
 
         container.innerHTML = courses.map(course => `
-            <div class="question-item" style="margin-top:15px; background:white; padding:18px; border-radius:10px; border:1px solid #e2e8f0; display:flex; gap:15px; align-items:center; flex-wrap:wrap; cursor:pointer;"
-                onclick="openCourseDashboard('${course.id}', '${escapeHTML(course.title)}')">
+            <div class="question-item" data-action="open-course" data-course-id="${escapeHTML(course.id)}" data-course-title="${escapeHTML(course.title)}" style="margin-top:15px; background:white; padding:18px; border-radius:10px; border:1px solid #e2e8f0; display:flex; gap:15px; align-items:center; flex-wrap:wrap; cursor:pointer;">
 
                 <img src="${escapeHTML(course.bannerUrl || '')}" alt="Banner"
                     style="width:120px; height:70px; object-fit:cover; border-radius:6px;">
@@ -1204,7 +1217,7 @@ async function loadAdminCoursesList() {
                 </div>
 
                 <button type="button"
-                    onclick="event.stopPropagation(); deleteAdminCourse('${course.id}')"
+                    data-action="delete-course" data-course-id="${escapeHTML(course.id)}"
                     style="background:#dc2626; color:white; border:none; padding:8px 14px; border-radius:6px; cursor:pointer;">
                     Delete
                 </button>
@@ -1276,6 +1289,55 @@ async function toggleAdminCourseHighlight(courseId, currentState) {
     } catch (error) {
         console.error("COURSE HIGHLIGHT ERROR:", error);
         alert("Unable to update course highlight: " + error.message);
+    }
+}
+
+async function deleteAdminCourse(courseId) {
+    if (!confirm("Are you sure you want to delete this course?\n\nAll exams in this course and all questions belonging to those exams will also be deleted. This cannot be undone.\n\nStudent results and payments will NOT be deleted.")) {
+        return;
+    }
+
+    try {
+        const courseRef = adminDb.collection("courses").doc(courseId);
+        const courseDoc = await courseRef.get();
+
+        if (!courseDoc.exists) {
+            alert("Course not found!");
+            return;
+        }
+
+        const examIds = courseDoc.data().exams || [];
+
+        // Collect references: questions (linked by examId) + exams + the course itself
+        const refsToDelete = [];
+
+        for (const examId of examIds) {
+            const questionSnapshot = await adminDb.collection("questions")
+                .where("examId", "==", examId)
+                .get();
+            questionSnapshot.docs.forEach(doc => refsToDelete.push(doc.ref));
+        }
+
+        examIds.forEach(examId => {
+            refsToDelete.push(adminDb.collection("exams").doc(examId));
+        });
+
+        refsToDelete.push(courseRef);
+
+        // Batched deletes in chunks of 400 (Firestore batch limit is 500)
+        for (let i = 0; i < refsToDelete.length; i += 400) {
+            const batch = adminDb.batch();
+            refsToDelete.slice(i, i + 400).forEach(ref => { batch.delete(ref); });
+            await batch.commit();
+        }
+
+        alert("Course deleted successfully!");
+
+        await loadAdminCoursesList();
+
+    } catch (error) {
+        console.error("DELETE COURSE ERROR:", error);
+        alert("Unable to delete course: " + error.message);
     }
 }
 async function loadCouponCourseOptions() {
@@ -1364,9 +1426,16 @@ async function renderResults() {
 
     try {
         const resultSnapshot = await adminDb.collection("results").get();
-        results = resultSnapshot.docs
-            .map(doc => ({ ...doc.data(), firestoreId: doc.id }))
-            .filter(result => Boolean(result.courseId));
+        const allResults = resultSnapshot.docs
+            .map(doc => ({ ...doc.data(), firestoreId: doc.id }));
+        results = allResults.filter(result => Boolean(result.courseId));
+        const legacyNote = document.getElementById("resultsLegacyNote");
+        if (legacyNote) {
+            const legacyCount = allResults.length - results.length;
+            legacyNote.innerHTML = legacyCount > 0
+                ? `<div class="note">${legacyCount} legacy (non-course) record${legacyCount === 1 ? "" : "s"} are not shown here</div>`
+                : "";
+        }
     } catch (error) {
         console.error("FIREBASE RESULTS LOAD ERROR:", error);
         container.innerHTML = `<p>Unable to load results. Please try again.</p>`;
@@ -1673,7 +1742,7 @@ async function exportResultsCSV() {
 async function backupAllData() {
     try {
         alert("Firebase backup is starting...");
-        const collections = ["exams", "questions", "results", "students", "notices", "payments", "paymentSettings", "courses", "coupons", "helpline", "helplineSettings"];
+        const collections = ["exams", "questions", "results", "students", "notices", "payments", "paymentSettings", "courses", "coupons", "helpline", "helplineSettings", "subscriptionPlans", "subscriptions"];
         const backupData = {};
 
         for (const collectionName of collections) {
@@ -1706,10 +1775,26 @@ async function restoreAllData(event) {
     reader.onload = async function(e) {
         try {
             const backup = JSON.parse(e.target.result);
-            const allowedCollections = ["exams", "questions", "results", "students", "notices", "payments", "paymentSettings", "courses", "coupons", "helpline", "helplineSettings"];
+            const allowedCollections = ["exams", "questions", "results", "students", "notices", "payments", "paymentSettings", "courses", "coupons", "helpline", "helplineSettings", "subscriptionPlans", "subscriptions"];
 
             if (backup.appName !== "RIKON'S EXAM CENTER" || backup.backupSource !== "Firebase" || !backup.data || typeof backup.data !== "object") {
                 throw new Error("Invalid Firebase backup file!");
+            }
+
+            // Validate BEFORE deleting anything: every item in every collection
+            // must have a firestoreId, otherwise abort the whole restore.
+            for (const name of allowedCollections) {
+                const items = backup.data[name];
+                if (items === undefined || items === null) continue;
+                if (!Array.isArray(items)) {
+                    throw new Error("Invalid backup: collection \"" + name + "\" is not a list. Restore aborted — nothing was changed.");
+                }
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    if (!item || typeof item !== "object" || typeof item.firestoreId !== "string" || item.firestoreId.trim() === "") {
+                        throw new Error("Invalid backup: item " + (i + 1) + " in collection \"" + name + "\" is missing a firestoreId. Restore aborted — nothing was changed.");
+                    }
+                }
             }
 
             const confirmed = confirm("WARNING!\n\nRestore all Firebase collections?\n\nExisting data will be replaced.\n\nA safety backup will be downloaded first.");
@@ -1783,6 +1868,7 @@ async function renderAnalytics() {
             return {
                 name: result.studentName || "Unknown Student",
                 id: result.studentId || "N/A",
+                examName: result.examName || "Unknown Exam",
                 percentage: (obtainedMarks / totalMarks) * 100
             };
         }).filter(Boolean);
@@ -1794,6 +1880,68 @@ async function renderAnalytics() {
         document.getElementById("analyticsResults").textContent = courseResults.length;
         document.getElementById("analyticsAverage").textContent = average.toFixed(1) + "%";
         document.getElementById("analyticsHighest").textContent = highest.toFixed(1) + "%";
+
+        const sortedPerformances = [...performances].sort((a, b) => b.percentage - a.percentage);
+        const topPerformances = sortedPerformances.slice(0, 10);
+
+        const topStudentsEl = document.getElementById("analyticsTopStudents");
+        if (topStudentsEl) {
+            topStudentsEl.innerHTML = topPerformances.length
+                ? topPerformances.map((item, index) => `
+                    <div style="display:flex; justify-content:space-between; gap:10px; padding:10px 12px; margin-top:8px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px;">
+                        <span><strong>${index + 1}. ${escapeHTML(item.name)}</strong> <span style="color:#64748b;">(ID: ${escapeHTML(item.id)})</span></span>
+                        <strong style="color:#2563eb;">${item.percentage.toFixed(1)}%</strong>
+                    </div>
+                `).join("")
+                : "No performance data available.";
+        }
+
+        const chartEl = document.getElementById("analyticsChart");
+        if (chartEl) {
+            chartEl.innerHTML = topPerformances.length
+                ? topPerformances.map(item => `
+                    <div style="margin-top:10px;">
+                        <div style="display:flex; justify-content:space-between; gap:10px;">
+                            <span>${escapeHTML(item.name)}</span>
+                            <strong>${item.percentage.toFixed(1)}%</strong>
+                        </div>
+                        <div style="background:#e2e8f0; border-radius:6px; height:14px; margin-top:4px; overflow:hidden;">
+                            <div style="background:#2563eb; height:100%; width:${Math.max(0, Math.min(100, item.percentage)).toFixed(1)}%;"></div>
+                        </div>
+                    </div>
+                `).join("")
+                : "No chart data available.";
+        }
+
+        const subjectEl = document.getElementById("subjectAnalytics");
+        if (subjectEl) {
+            // Results carry examName (exams carry category = course title), so group by exam name.
+            const examGroups = {};
+            performances.forEach(item => {
+                const key = item.examName || "Unknown Exam";
+                if (!examGroups[key]) examGroups[key] = { count: 0, total: 0 };
+                examGroups[key].count += 1;
+                examGroups[key].total += item.percentage;
+            });
+            const examNames = Object.keys(examGroups);
+            subjectEl.innerHTML = examNames.length
+                ? examNames.map(examName => {
+                    const group = examGroups[examName];
+                    const groupAverage = group.total / group.count;
+                    return `
+                    <div style="margin-top:10px;">
+                        <div style="display:flex; justify-content:space-between; gap:10px;">
+                            <span><strong>Exam:</strong> ${escapeHTML(examName)} <span style="color:#64748b;">(${group.count} result${group.count === 1 ? "" : "s"})</span></span>
+                            <strong>${groupAverage.toFixed(1)}%</strong>
+                        </div>
+                        <div style="background:#e2e8f0; border-radius:6px; height:14px; margin-top:4px; overflow:hidden;">
+                            <div style="background:#16a34a; height:100%; width:${Math.max(0, Math.min(100, groupAverage)).toFixed(1)}%;"></div>
+                        </div>
+                    </div>
+                    `;
+                }).join("")
+                : "No subject data available.";
+        }
     } catch (error) {
         console.error("FIREBASE ANALYTICS ERROR:", error);
     }
@@ -1837,10 +1985,18 @@ async function renderPayments() {
 
     try {
         const snapshot = await adminDb.collection("payments").get();
-        const payments = snapshot.docs
-            .map(doc => ({ ...doc.data(), firestoreId: doc.id }))
+        const allPayments = snapshot.docs
+            .map(doc => ({ ...doc.data(), firestoreId: doc.id }));
+        const payments = allPayments
             .filter(payment => Boolean(payment.courseId))
             .sort((a, b) => Number(b.id || 0) - Number(a.id || 0));
+        const legacyNote = document.getElementById("paymentsLegacyNote");
+        if (legacyNote) {
+            const legacyCount = allPayments.length - payments.length;
+            legacyNote.innerHTML = legacyCount > 0
+                ? `<div class="note">${legacyCount} legacy (non-course) record${legacyCount === 1 ? "" : "s"} are not shown here</div>`
+                : "";
+        }
 
         const total = payments.length;
         const pending = payments.filter(p => p.status === "pending").length;
@@ -2122,6 +2278,13 @@ async function updateDashboard() {
     } catch (error) {
         document.getElementById("totalStudents").textContent = "Error";
     }
+    try {
+        const resultSnapshot = await adminDb.collection("results").get();
+        document.getElementById("totalResultsPublished").textContent = resultSnapshot.size;
+    } catch (error) {
+        console.error("Total Results Loading Error:", error);
+        document.getElementById("totalResultsPublished").textContent = "Error";
+    }
     const recent = document.getElementById("recentExams");
     if (recent) {
         recent.innerHTML = examList.length
@@ -2285,6 +2448,17 @@ async function loadAdminCouponsList() {
     const container = document.getElementById("adminCouponsList");
     if (!container) return;
 
+    container.onclick = function(event) {
+        const button = event.target.closest('button[data-action="edit-coupon"], button[data-action="delete-coupon"]');
+        if (!button) return;
+        const code = button.dataset.code;
+        if (button.dataset.action === "edit-coupon") {
+            editAdminCoupon(code);
+        } else if (button.dataset.action === "delete-coupon") {
+            deleteAdminCoupon(code);
+        }
+    };
+
     try {
         const [couponSnapshot, courseSnapshot] = await Promise.all([
             adminDb.collection("coupons").get(),
@@ -2360,13 +2534,13 @@ async function loadAdminCouponsList() {
 
                     <div style="display:flex; gap:8px; flex-shrink:0;">
     <button type="button"
-        onclick="editAdminCoupon('${escapeHTML(coupon.code)}')"
+        data-action="edit-coupon" data-code="${escapeHTML(coupon.code)}"
         style="background:#2563eb; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">
         Edit
     </button>
 
     <button type="button"
-        onclick="deleteAdminCoupon('${escapeHTML(coupon.code)}')"
+        data-action="delete-coupon" data-code="${escapeHTML(coupon.code)}"
         style="background:#dc2626; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">
         Delete
     </button>
