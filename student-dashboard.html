@@ -628,6 +628,31 @@ let questions = [];
 let questionsLoaded = false;
 let questionsLoadPromise = null;
 
+// =================================
+// COURSE REGISTRY
+// =================================
+// Course objects are kept in memory so rendered buttons only pass the
+// course id. Passing course titles through inline onclick strings
+// broke the buttons whenever a title contained an apostrophe (the
+// browser decodes &#39; back to ' and the handler gets a SyntaxError).
+let studentCourseRegistry = {};
+
+function registerStudentCourse(course, fallbackId) {
+    if (!course) return;
+
+    if (course.id !== undefined && course.id !== null) {
+        studentCourseRegistry[String(course.id)] = course;
+    }
+
+    if (fallbackId !== undefined && fallbackId !== null) {
+        studentCourseRegistry[String(fallbackId)] = course;
+    }
+}
+
+function getStudentCourse(courseId) {
+    return studentCourseRegistry[String(courseId)] || null;
+}
+
 async function loadStudentExamData() {
 // LOAD COURSE EXAMS
 try {
@@ -810,6 +835,13 @@ async function goBackStudentPage() {
     updateStudentBackButton();
 
     isStudentBackNavigation = true;
+
+    // Back targets render inside dashboardContent. The exam and result
+    // screens hide it (hideAll), so make it the visible area again or
+    // the restored view is rendered invisibly and Back looks dead.
+    document.getElementById("examArea").style.display = "none";
+    document.getElementById("resultArea").style.display = "none";
+    document.getElementById("dashboardContent").style.display = "block";
 
     try {
         await previousAction();
@@ -2862,6 +2894,7 @@ async function loadStudentCoursesList() {
         ]);
 
         const courses = coursesSnap.docs.map(doc => doc.data());
+        courses.forEach(course => registerStudentCourse(course));
         const myPayments = paymentsSnap.docs
     .map(doc => doc.data())
     .filter(payment => payment.paymentType !== "subscription");
@@ -2880,7 +2913,7 @@ async function loadStudentCoursesList() {
             } else if (payment && payment.status === "pending") {
                 buttonHTML = `<button class="primary-btn" style="background:#d97706; cursor:default;" disabled>⏳ Payment Pending Approval</button>`;
             } else {
-                buttonHTML = `<button onclick="openEnrollmentModal('${course.id}', '${escapeHTML(course.title)}', ${course.offerPrice})" class="primary-btn">Enroll Now</button>`;
+                buttonHTML = `<button onclick="openEnrollmentModal('${course.id}')" class="primary-btn">Enroll Now</button>`;
             }
 
             return `
@@ -2922,8 +2955,18 @@ async function openStudentCourseDetails(courseId, targetContainerId = "studentCo
 
     currentStudentView = () => openStudentCourseDetails(courseId, targetContainerId);
 
-    const container = document.getElementById(targetContainerId);
-    if (!container) return;
+    let container = document.getElementById(targetContainerId);
+    if (!container) {
+        // The subscription payment modal replaces the whole
+        // dashboardContent, destroying this container. Recreate it so
+        // Back navigation to the details view works again.
+        const dashboard = document.getElementById("dashboardContent");
+        if (!dashboard) return;
+
+        dashboard.innerHTML = `<div id="${targetContainerId}"></div>`;
+        container = document.getElementById(targetContainerId);
+        if (!container) return;
+    }
 
     try {
         container.innerHTML = "<p>Loading course details...</p>";
@@ -2943,6 +2986,7 @@ async function openStudentCourseDetails(courseId, targetContainerId = "studentCo
         }
 
         const course = doc.data();
+        registerStudentCourse(course, courseId);
 
         const plans = plansSnap.docs.map(planDoc => ({
             id: planDoc.id,
@@ -2986,8 +3030,8 @@ const subscriptionPlansHTML = plans.length
             <button
                 class="primary-btn"
                 onclick="selectStudentSubscriptionPlan(
-                    '${escapeHTML(plan.id)}',
-                    '${escapeHTML(courseId)}'
+                    '${plan.id}',
+                    '${courseId}'
                 )"
                 style="width:100%;margin-top:12px;">
                 Subscribe Now
@@ -3337,6 +3381,7 @@ async function loadHighlightedCourses() {
         ]);
 
         const courses = coursesSnap.docs.map(doc => doc.data());
+        courses.forEach(course => registerStudentCourse(course));
         const myPayments = paymentsSnap.docs
     .map(doc => doc.data())
     .filter(payment => payment.paymentType !== "subscription");
@@ -3368,7 +3413,7 @@ async function loadHighlightedCourses() {
                     </button>`;
             } else {
                 buttonHTML = `
-                    <button onclick="event.stopPropagation(); openEnrollmentModal('${course.id}', '${escapeHTML(course.title)}', ${course.offerPrice})"
+                    <button onclick="event.stopPropagation(); openEnrollmentModal('${course.id}')"
                         class="primary-btn">
                         Enroll Now
                     </button>`;
@@ -3485,6 +3530,14 @@ async function viewEnrolledCourseExams(courseId) {
 // অ্যাডমিনের পেমেন্ট নম্বর সহ এনরোলমেন্ট মডাল ওপেন করা
 async function openEnrollmentModal(courseId, courseTitle, coursePrice) {
 
+    // Buttons pass only the course id; title/price are resolved from
+    // the in-memory course registry (see registerStudentCourse).
+    const registeredCourse = getStudentCourse(courseId);
+    if (registeredCourse) {
+        if (courseTitle === undefined) courseTitle = registeredCourse.title || "";
+        if (coursePrice === undefined) coursePrice = registeredCourse.offerPrice;
+    }
+
     if (!isStudentBackNavigation && currentStudentView) {
         pushStudentHistory(currentStudentView);
     }
@@ -3532,7 +3585,7 @@ async function openEnrollmentModal(courseId, courseTitle, coursePrice) {
             <input type="text" id="enrollTrxId" placeholder="e.g., 9H87G6F5" style="margin-top:5px;">
 
             <div style="display:flex; gap:10px; margin-top:20px;">
-                <button id="submitEnrollmentBtn" onclick="submitCourseEnrollment('${courseId}', '${escapeHTML(courseTitle)}')" class="primary-btn" style="flex:1;">Submit Enrollment Request</button><button onclick="goBackStudentPage()" style="background:#64748b; color:white; border:none; padding:12px 20px; border-radius:7px; cursor:pointer;">← Back</button>
+                <button id="submitEnrollmentBtn" onclick="submitCourseEnrollment('${courseId}')" class="primary-btn" style="flex:1;">Submit Enrollment Request</button><button onclick="goBackStudentPage()" style="background:#64748b; color:white; border:none; padding:12px 20px; border-radius:7px; cursor:pointer;">← Back</button>
             </div>
             <p id="enrollMsg" style="margin-top:10px;"></p>
         </div>
@@ -3674,6 +3727,13 @@ if (!["global", "course", "student"].includes(coupon.scope)) {
 
 async function submitCourseEnrollment(courseId, courseTitle) {
     if (enrollmentSubmitting) return;
+
+    // Buttons pass only the course id; the title is resolved from the
+    // in-memory course registry (see registerStudentCourse).
+    if (courseTitle === undefined) {
+        const registeredCourse = getStudentCourse(courseId);
+        courseTitle = registeredCourse ? (registeredCourse.title || "") : "";
+    }
 
     const method = document.getElementById("enrollPaymentMethod").value;
     const senderNumber = document.getElementById("enrollSenderNumber").value.trim();
